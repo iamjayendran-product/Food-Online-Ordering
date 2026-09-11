@@ -22,8 +22,9 @@ There is no delivery-partner role.
 
 ## Tech stack
 
-- **Next.js (App Router, TypeScript)** — full-stack only. No separate backend/API service; API routes live inside the Next.js app (`src/app/api/`).
-- **PostgreSQL** via **Prisma ORM** — relational data (restaurants → menu items, users → orders → order items) fits a relational DB much better than NoSQL.
+- **Next.js (App Router, TypeScript)** — full-stack only. No separate backend/API service.
+- **Mutations use Server Actions**, not route handlers — `"use server"` functions in `actions.ts` files next to the pages that call them (e.g. `src/app/(customer)/login/actions.ts`, `.../checkout/actions.ts`). Pages read data in Server Components via `src/lib`. `src/app/api/` stays empty unless something genuinely needs a route handler (a webhook, a non-Next.js client) — don't add one for ordinary form submissions.
+- **PostgreSQL** via **Prisma ORM**, using the `prisma-client` generator + `@prisma/adapter-pg` driver adapter (Prisma 7). Relational data (restaurants → menu items, users → orders → order items) fits a relational DB much better than NoSQL.
 - **Tailwind CSS** for styling.
 - **Docker Compose** runs Postgres locally (`docker-compose.yml`).
 
@@ -34,22 +35,43 @@ Why this stack: one language (TypeScript) across the whole app keeps context-swi
 ```
 src/
   app/
-    (customer)/           # Customer-facing routes (browse restaurants, cart, checkout, order history)
+    (customer)/            # Customer-facing routes — the v1 journey lives entirely here
+      login/                 # F1: login/logout (page, form, Server Actions)
+      basket/                # F4: basket page
+      checkout/              # F5/F6: checkout page, CheckoutView, placeOrderAction
+      orders/[orderId]/      # F6: order confirmation page
+      restaurants/[slug]/    # F3: restaurant menu page
+      page.tsx               # F2: restaurant discovery (search + card grid)
+      layout.tsx              # BasketProvider + SiteHeader
     (restaurant-admin)/
-      admin/               # Restaurant admin routes (menu management, incoming orders) -> /admin
+      admin/               # Restaurant admin routes — still a placeholder stub -> /admin
     (super-admin)/
-      platform/            # Platform super-admin routes (restaurant onboarding/approval) -> /platform
-    api/                   # Route handlers backing all of the above
-  lib/                     # Shared server-side code: Prisma client singleton, auth config, validation
-  components/              # Shared React components
+      platform/            # Platform super-admin routes — still a placeholder stub -> /platform
+    api/                   # Empty. Mutations are Server Actions, not route handlers — see Tech stack.
+  proxy.ts                 # Optimistic route protection (this Next.js version's renamed middleware)
+  lib/                     # Server-side code: db.ts, session.ts, dal.ts, restaurants.ts, basket.ts,
+                            # pricing.ts, format.ts, auth/, orders/, payments/
+  components/              # Shared React components (BasketProvider, SiteHeader, menu/basket UI)
 prisma/
-  schema.prisma            # Database schema (models not defined yet)
+  schema.prisma            # User, Restaurant, MenuCategory, MenuItem, Order, OrderItem
+  seed.ts                  # Idempotent seed: 6 T Nagar restaurants, 60 items, 2 demo customers
+tests/
+  browser/                 # Playwright specs that drive a page
+  logic/                   # Playwright specs that call src/lib directly, no browser
+  support/                 # Shared test helpers (db, auth, basket, global-setup)
+docs/
+  prd/customer-ordering.md # Requirements + Appendix B test cases (source of truth for behavior)
+  features.md              # Feature-by-feature build log — read this first when resuming work
+.claude/
+  agents/feature-reviewer.md   # Independent reviewer, no author context
+  skills/review-feature/       # /review-feature F<n> — forks to feature-reviewer, fixes what it finds
+  hooks/                       # Stop hook blocking an unreviewed src/tests change
 docker-compose.yml          # Local Postgres
 ```
 
 The `(customer)`, `(restaurant-admin)`, and `(super-admin)` folders are [route groups](https://nextjs.org/docs/app/building-your-application/routing/route-groups) — they organize routes by role without affecting the URL, except where a named segment inside them (`admin`, `platform`) does add a path segment.
 
-**Current state: structure only.** No database models, no auth, no pages beyond stubs exist yet. Features will be added incrementally on request — do not build ahead of what's asked.
+**Current state: v1 customer journey complete (F0–F6).** Login, restaurant discovery/search, menus, basket, checkout, and simulated payment through to order confirmation all work end to end — see [docs/features.md](docs/features.md) for the full build log. Restaurant-admin and platform-admin are still placeholder stubs. Features are added incrementally on request — do not build ahead of what's asked.
 
 ## Local development
 
@@ -62,12 +84,28 @@ npm run dev         # start Next.js dev server
 - `npm run db:up` / `npm run db:down` — start/stop the local Postgres container.
 - Prisma config lives in `prisma7.config.ts` (Prisma 7 config format); `DATABASE_URL` is read from `.env`.
 - Keep `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` in `.env` in sync with the credentials embedded in `DATABASE_URL`.
+- `npm run db:migrate` / `npm run db:seed` — apply migrations / run the idempotent seed (`prisma/seed.ts`). Prisma 7's `migrate reset` does **not** auto-seed even with `migrations.seed` configured — always run seed as its own step.
+- Demo accounts: `priya@example.com` / `arjun@example.com`, password `password123`.
+
+## Testing
+
+**Every test case is a Playwright test — there is no other test runner.** Test cases live in `docs/prd/customer-ordering.md`'s Appendix B; every test title starts with its ID (e.g. `TC-4.6 …`).
+
+- `tests/browser/*.spec.ts` — drive a real page with `page`.
+- `tests/logic/*.spec.ts` — call `src/lib` functions directly, no `page` fixture, no browser launched.
+- `npm test` runs the full suite. `globalSetup` (`tests/support/global-setup.ts`) resets and reseeds `TEST_DATABASE_URL` first — **never** point it at the same database as `DATABASE_URL`.
+- `npm run tc:check` (optionally `-- 1 2 …`) fails, listing them, if any Appendix B test case has no matching test title.
+- `playwright.config.ts` sets `process.env.DATABASE_URL = TEST_DATABASE_URL` for the whole test process (not just the spawned dev-server child) — logic tests import `src/lib/db.ts` directly, with no HTTP hop that would otherwise carry an env override.
+
+## Independent review
+
+Every feature is reviewed by `.claude/skills/review-feature` (`/review-feature F<n>`, e.g. `/review-feature F3` or `/review-feature F5 F6` for features built together). It forks to `.claude/agents/feature-reviewer.md` — an agent with **no access to the implementing session's context** — which fixes what it finds rather than only reporting. A feature counts as reviewed only once a *fresh* instance returns a clean `PASS` with no changes. A Stop hook (`.claude/hooks/require-review.sh`) blocks ending a session if `src/` or `tests/` changed since the last recorded `PASS`.
 
 ## Conventions
 
 - TypeScript strict mode; avoid `any`.
 - No comments unless explaining a non-obvious *why* (a workaround, a subtle constraint) — never restate what the code already says.
 - Tailwind CSS for all styling; avoid separate CSS files per component.
-- Use `zod` for input validation at API boundaries once API routes are built.
+- Use `zod` for input validation at every server boundary: Server Action inputs, localStorage-persisted state (`parseStoredBasket`). Prefer `.strict()` when the shape must reject unrecognized fields outright rather than silently drop them (e.g. a client-supplied price).
 - Prefer editing/extending existing files over introducing new patterns; keep the three role-based route groups as the organizing structure for pages.
 - Don't add features, roles, or infrastructure (delivery tracking, real payments, social login, deployment configs) beyond what's been explicitly requested — this project grows one confirmed feature at a time.
