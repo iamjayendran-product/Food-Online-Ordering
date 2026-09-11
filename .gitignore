@@ -45,4 +45,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# local review checkpoint (see .claude/hooks/)
+/.claude/review-state.json
+
 /src/generated/prisma

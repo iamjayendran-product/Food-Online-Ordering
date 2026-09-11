@@ -13,8 +13,8 @@ This is the single place to see what's being built, in what order, and where eac
 
 | ID | Feature | PRD requirement | Depends on | Test cases | Status | Reviewer | Owner sign-off |
 |---|---|---|---|---|---|---|---|
-| F0 | Foundation | (none, technical) | none | none (build/seed checks) | **Awaiting sign-off** | reviewed together with F1 | none |
-| F1 | Login and logout | P0-1 | F0 | TC-1.1–1.12 (12) | Not started | none | none |
+| F0 | Foundation | (none, technical) | none | none (build/seed checks) | **Done** | reviewed together with F1 | 2026-09-11 |
+| F1 | Login and logout | P0-1 | F0 | TC-1.1–1.12 (12) | **Awaiting sign-off** | PASS (round 3/3) | none |
 | F2 | Restaurant discovery | P0-2 | F0 | TC-2.1–2.7 (7) | Not started | none | none |
 | F3 | Restaurant menu | P0-3 | F2 | TC-3.1–3.7 (7) | Not started | none | none |
 | F4 | Basket | P0-4 | F3 | TC-4.1–4.12 (12) | Not started | none | none |
@@ -30,8 +30,8 @@ This is the single place to see what's being built, in what order, and where eac
 | PRD via `product-management:write-spec` | **Done**, approved 2026-09-11 | `docs/prd/customer-ordering.md` |
 | Plugins installed | **Done** 2026-09-11 | `playwright@claude-plugins-official` (project scope), `product-management@knowledge-work-plugins` (local scope) |
 | `.claude/agents/` directory | **Done** | `.gitkeep`, created before a restart so the directory is watched |
-| Independent reviewer (agent + `review-feature` skill) | Not started | Built and tested during F1 (see F1 notes) |
-| Stop hook forcing review | Not started | Registered only after the reviewer passes its GREEN test in F1 |
+| Independent reviewer (agent + `review-feature` skill) | **Done** 2026-09-11 | `.claude/agents/feature-reviewer.md` + `.claude/skills/review-feature/SKILL.md`. RED/GREEN/REFACTOR results in F1 notes below |
+| Stop hook forcing review | **Done** 2026-09-11 | `.claude/hooks/{review-fingerprint,mark-reviewed,require-review}.sh`, registered in `.claude/settings.json` |
 | `tc:check` coverage script | **Done** 2026-09-11 | `scripts/check-test-cases.mjs`; parses all 60 Appendix B IDs correctly, filters by feature number |
 
 ---
@@ -131,6 +131,14 @@ This is the single place to see what's being built, in what order, and where eac
 5. **REFACTOR** the skill wording if anything was missed.
 6. Register the Stop hook in `.claude/settings.json` (via the update-config skill). Confirm it blocks once on an unreviewed `src/` edit.
 
+**Results, 2026-09-11:**
+- **RED baseline** (plain `general-purpose` subagent, report-only, no defect hints given): caught all 3 planted defects unprompted, correctly tied the missing TC-1.3 test to the wrong-message defect. No gaps to design around — the baseline was already thorough.
+- **GREEN, round 1** (`feature-reviewer` via `/review-feature F0 F1`): found and fixed the same 3 defects, returned `FIXED`, correctly did not mark reviewed.
+- **Round 2** (fresh `feature-reviewer` instance): found a 4th, unplanted defect — `authenticate.ts` skipped `bcrypt.compare` entirely for an unknown email, a timing side-channel that undermines the PRD's "identical message prevents enumeration" requirement even though the *text* was already identical. Fixed with a constant-time dummy-hash comparison. Returned `FIXED`.
+- **Round 3** (fresh instance): `PASS`, nothing to fix. Ran `mark-reviewed.sh`.
+- **REFACTOR:** nothing needed — no rationalization or ambiguity surfaced across 3 rounds, so the agent/skill wording was left as written.
+- **Stop hook:** registered in `.claude/settings.json`. `require-review.sh` was pipe-tested directly (not just via a live Stop event, which can't be triggered mid-turn): blocks when the src/tests fingerprint doesn't match the last `mark-reviewed.sh` checkpoint, allows when it does. Confirmed both directions before wiring it in.
+
 ---
 
 ## F2: Restaurant discovery (P0-2)
@@ -223,3 +231,5 @@ This is the single place to see what's being built, in what order, and where eac
 |---|---|
 | 2026-09-11 | Tracker created. PRD approved. Plugins installed. F0 is next. |
 | 2026-09-11 | F0 built and verified (deps, Prisma schema/migration/seed, Playwright tooling, layout shell). Awaiting owner sign-off. |
+| 2026-09-11 | F0 signed off and committed. F1 (login/logout) started. |
+| 2026-09-11 | F1 built. Independent reviewer (agent, skill, hooks) built and tested via RED→GREEN→PASS, catching 3 planted defects plus 1 real timing side-channel bug. Stop hook registered. Awaiting owner sign-off. |
