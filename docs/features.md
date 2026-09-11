@@ -15,8 +15,8 @@ This is the single place to see what's being built, in what order, and where eac
 |---|---|---|---|---|---|---|---|
 | F0 | Foundation | (none, technical) | none | none (build/seed checks) | **Done** | reviewed together with F1 | 2026-09-11 |
 | F1 | Login and logout | P0-1 | F0 | TC-1.1–1.12 (12) | **Done** | PASS (round 3/3) | 2026-09-11 |
-| F2 | Restaurant discovery | P0-2 | F0 | TC-2.1–2.7 (7) | **Awaiting sign-off** | PASS (round 1/1) | none |
-| F3 | Restaurant menu | P0-3 | F2 | TC-3.1–3.7 (7) | Not started | none | none |
+| F2 | Restaurant discovery | P0-2 | F0 | TC-2.1–2.7 (7) | **Done** | PASS (round 1/1) | 2026-09-11 |
+| F3 | Restaurant menu | P0-3 | F2 | TC-3.1–3.7 (7) | **Done** | PASS (round 1/1) | 2026-09-11 |
 | F4 | Basket | P0-4 | F3 | TC-4.1–4.12 (12) | Not started | none | none |
 | F5 | Checkout | P0-5 | F1, F4 | TC-5.1–5.5 (5) | Not started | none | none |
 | F6 | Place order and confirmation | P0-6 | F5 | TC-6.1–6.16 (16) + TC-J.1 | Not started | none | none |
@@ -168,6 +168,8 @@ This is the single place to see what's being built, in what order, and where eac
 
 **Test cases:** TC-3.1 to TC-3.7 (5 browser, 2 logic)
 
+**Built and reviewed 2026-09-11.** `AddToBasketButton` is presentational only (enabled/disabled by availability, no click handler) — real basket wiring is F4's scope. Reviewer: `PASS` on the first round.
+
 ---
 
 ## F4: Basket (P0-4)
@@ -237,3 +239,5 @@ This is the single place to see what's being built, in what order, and where eac
 | 2026-09-11 | F1 built. Independent reviewer (agent, skill, hooks) built and tested via RED→GREEN→PASS, catching 3 planted defects plus 1 real timing side-channel bug. Stop hook registered. Awaiting owner sign-off. |
 | 2026-09-11 | F1 signed off and committed (commit cb14421). F2 (restaurant discovery) started. |
 | 2026-09-11 | F2 built and reviewed (PASS, round 1). Caught and fixed a real LIKE-wildcard bug in search before review. Awaiting owner sign-off. |
+| 2026-09-11 | F2 signed off and committed (commit 43f27d0). Owner asked not to be prompted for sign-off between features going forward — building F3-F6 continuously. |
+| 2026-09-11 | F3 built and reviewed (PASS, round 1). |
