@@ -3,7 +3,13 @@ import { VegMarker } from "@/components/veg-marker";
 import { AddToBasketButton } from "@/components/add-to-basket-button";
 import type { MenuItemDTO } from "@/lib/restaurants";
 
-export function MenuItemRow({ item }: { item: MenuItemDTO }) {
+type MenuItemRowProps = {
+  item: MenuItemDTO;
+  restaurantSlug: string;
+  restaurantName: string;
+};
+
+export function MenuItemRow({ item, restaurantSlug, restaurantName }: MenuItemRowProps) {
   return (
     <li className="flex items-start justify-between gap-4 border-b border-black/10 py-3 last:border-b-0 dark:border-white/10">
       <div className="flex gap-2">
@@ -19,7 +25,14 @@ export function MenuItemRow({ item }: { item: MenuItemDTO }) {
           )}
         </div>
       </div>
-      <AddToBasketButton isAvailable={item.isAvailable} />
+      <AddToBasketButton
+        isAvailable={item.isAvailable}
+        restaurantSlug={restaurantSlug}
+        restaurantName={restaurantName}
+        itemId={item.id}
+        name={item.name}
+        unitPricePaise={item.pricePaise}
+      />
     </li>
   );
 }

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/dal";
 import { logout } from "@/app/(customer)/login/actions";
+import { BasketLink } from "@/components/basket-link";
 
 export async function SiteHeader() {
   const user = await getCurrentUser();
@@ -12,6 +13,7 @@ export async function SiteHeader() {
           T Nagar Food
         </Link>
         <nav className="flex items-center gap-4 text-sm">
+          <BasketLink />
           {user ? (
             <>
               <span>Hi {user.name.split(" ")[0]}</span>

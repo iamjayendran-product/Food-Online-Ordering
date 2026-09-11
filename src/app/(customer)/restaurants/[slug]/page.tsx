@@ -26,7 +26,12 @@ export default async function RestaurantPage({
             <h2 className="mb-2 text-lg font-semibold">{category.name}</h2>
             <ul>
               {category.items.map((item) => (
-                <MenuItemRow key={item.id} item={item} />
+                <MenuItemRow
+                  key={item.id}
+                  item={item}
+                  restaurantSlug={menu.slug}
+                  restaurantName={menu.name}
+                />
               ))}
             </ul>
           </section>
