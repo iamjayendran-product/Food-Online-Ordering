@@ -16,7 +16,15 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const session = await readSession();
 
-  if (isProtected(pathname) && !session) {
+  // A Server Action call (identified by this header) expects either a
+  // normal action response or a redirect the action itself issued — an
+  // external redirect injected in front of it breaks the client's action
+  // runtime ("unexpected response from the server"). Let it through; every
+  // action here re-checks auth itself (see placeOrderAction's
+  // UNAUTHENTICATED branch) and handles it without that framework error.
+  const isServerAction = request.headers.has("next-action");
+
+  if (isProtected(pathname) && !session && !isServerAction) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(loginUrl);

@@ -7,9 +7,10 @@ type MenuItemRowProps = {
   item: MenuItemDTO;
   restaurantSlug: string;
   restaurantName: string;
+  restaurantAddress: string;
 };
 
-export function MenuItemRow({ item, restaurantSlug, restaurantName }: MenuItemRowProps) {
+export function MenuItemRow({ item, restaurantSlug, restaurantName, restaurantAddress }: MenuItemRowProps) {
   return (
     <li className="flex items-start justify-between gap-4 border-b border-black/10 py-3 last:border-b-0 dark:border-white/10">
       <div className="flex gap-2">
@@ -29,6 +30,7 @@ export function MenuItemRow({ item, restaurantSlug, restaurantName }: MenuItemRo
         isAvailable={item.isAvailable}
         restaurantSlug={restaurantSlug}
         restaurantName={restaurantName}
+        restaurantAddress={restaurantAddress}
         itemId={item.id}
         name={item.name}
         unitPricePaise={item.pricePaise}

@@ -12,18 +12,25 @@ export type BasketLine = {
 export type Basket = {
   restaurantSlug: string | null;
   restaurantName: string | null;
+  restaurantAddress: string | null;
   lines: BasketLine[];
 };
 
 export type NewBasketItem = {
   restaurantSlug: string;
   restaurantName: string;
+  restaurantAddress: string;
   itemId: string;
   name: string;
   unitPricePaise: number;
 };
 
-export const EMPTY_BASKET: Basket = { restaurantSlug: null, restaurantName: null, lines: [] };
+export const EMPTY_BASKET: Basket = {
+  restaurantSlug: null,
+  restaurantName: null,
+  restaurantAddress: null,
+  lines: [],
+};
 
 export type BasketAction =
   | { type: "add"; item: NewBasketItem }
@@ -37,7 +44,7 @@ export type BasketAction =
 export function basketReducer(state: Basket, action: BasketAction): Basket {
   switch (action.type) {
     case "add": {
-      const { restaurantSlug, restaurantName, itemId, name, unitPricePaise } = action.item;
+      const { restaurantSlug, restaurantName, restaurantAddress, itemId, name, unitPricePaise } = action.item;
       const existing = state.lines.find((line) => line.itemId === itemId);
       if (existing) {
         return {
@@ -50,6 +57,7 @@ export function basketReducer(state: Basket, action: BasketAction): Basket {
       return {
         restaurantSlug,
         restaurantName,
+        restaurantAddress,
         lines: [...state.lines, { itemId, name, unitPricePaise, quantity: 1 }],
       };
     }
@@ -76,10 +84,11 @@ export function basketReducer(state: Basket, action: BasketAction): Basket {
     }
 
     case "replaceWith": {
-      const { restaurantSlug, restaurantName, itemId, name, unitPricePaise } = action.item;
+      const { restaurantSlug, restaurantName, restaurantAddress, itemId, name, unitPricePaise } = action.item;
       return {
         restaurantSlug,
         restaurantName,
+        restaurantAddress,
         lines: [{ itemId, name, unitPricePaise, quantity: 1 }],
       };
     }
@@ -106,6 +115,7 @@ const basketSchema = z
   .object({
     restaurantSlug: z.string().nullable(),
     restaurantName: z.string().nullable(),
+    restaurantAddress: z.string().nullable(),
     lines: z.array(basketLineSchema),
   })
   .refine(

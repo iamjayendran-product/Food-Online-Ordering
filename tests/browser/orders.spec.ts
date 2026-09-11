@@ -1,0 +1,182 @@
+import { test, expect } from "@playwright/test";
+import { loginAs } from "../support/auth";
+import { testDb } from "../support/db";
+import { BASKET_STORAGE_KEY } from "../support/basket";
+
+async function addChickenBiryaniToBasket(page: import("@playwright/test").Page) {
+  await page.goto("/restaurants/ranganathan-street-biryani");
+  await page.locator("li", { hasText: "Chicken Biryani" }).getByRole("button", { name: "Add" }).click();
+}
+
+test("TC-6.4 an item that becomes unavailable after being added is flagged and blocks payment until removed", async ({ page }) => {
+  const item = await testDb.menuItem.findFirstOrThrow({ where: { name: "Chicken Biryani" } });
+
+  await addChickenBiryaniToBasket(page);
+  await loginAs(page, "priya@example.com");
+  await page.goto("/checkout");
+
+  await testDb.menuItem.update({ where: { id: item.id }, data: { isAvailable: false } });
+  try {
+    const payButton = page.getByRole("button", { name: "Pay ₹231" });
+    await payButton.click();
+
+    await expect(page.getByText("No longer available", { exact: true })).toBeVisible();
+    await expect(
+      page.getByText("Some items are no longer available. Remove them from your basket to continue."),
+    ).toBeVisible();
+    await expect(payButton).toBeDisabled();
+
+    await page.locator("li", { hasText: "Chicken Biryani" }).getByRole("button", { name: "Remove" }).click();
+    await expect(page).toHaveURL("/basket");
+  } finally {
+    await testDb.menuItem.update({ where: { id: item.id }, data: { isAvailable: true } });
+  }
+});
+
+test("TC-6.6 a tampered basket price is corrected with a notice before payment", async ({ page }) => {
+  await addChickenBiryaniToBasket(page);
+  await loginAs(page, "priya@example.com");
+
+  // Simulate a stale/edited client: tamper the saved basket's price directly.
+  await page.evaluate((key) => {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return;
+    const basket = JSON.parse(raw);
+    basket.lines = basket.lines.map((line: { unitPricePaise: number }) => ({ ...line, unitPricePaise: 1 }));
+    window.localStorage.setItem(key, JSON.stringify(basket));
+  }, BASKET_STORAGE_KEY);
+
+  await page.goto("/checkout");
+  await page.getByRole("button", { name: /^Pay/ }).click();
+
+  await expect(page.getByText(/Prices changed since you added these items/)).toBeVisible();
+  await expect(page.getByText("Total: ₹231")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Pay ₹231" })).toBeVisible();
+});
+
+test("TC-6.8 clearing cookies mid-checkout sends Pay to login with no new order", async ({ page, context }) => {
+  await addChickenBiryaniToBasket(page);
+  await loginAs(page, "priya@example.com");
+  await page.goto("/checkout");
+
+  const beforeCount = await testDb.order.count();
+  await context.clearCookies();
+  await page.getByRole("button", { name: "Pay ₹231" }).click();
+
+  await expect(page).toHaveURL("/login?next=%2Fcheckout");
+  expect(await testDb.order.count()).toBe(beforeCount);
+});
+
+test("TC-6.10 paying with failure selected shows a failure message and keeps the basket", async ({ page }) => {
+  await addChickenBiryaniToBasket(page);
+  await loginAs(page, "priya@example.com");
+  await page.goto("/checkout");
+
+  await page.getByLabel("Simulate failed payment").check();
+  await page.getByRole("button", { name: "Pay ₹231" }).click();
+
+  await expect(
+    page.getByText("Payment failed. You have not been charged. Please try again."),
+  ).toBeVisible();
+  await expect(page).toHaveURL("/checkout");
+  await expect(page.getByText("Chicken Biryani")).toBeVisible();
+});
+
+test("TC-6.11 retrying with success after a failure reaches the confirmation page", async ({ page }) => {
+  await addChickenBiryaniToBasket(page);
+  await loginAs(page, "priya@example.com");
+  await page.goto("/checkout");
+
+  await page.getByLabel("Simulate failed payment").check();
+  await page.getByRole("button", { name: "Pay ₹231" }).click();
+  await expect(
+    page.getByText("Payment failed. You have not been charged. Please try again."),
+  ).toBeVisible();
+
+  await page.getByLabel("Simulate successful payment").check();
+  await page.getByRole("button", { name: "Pay ₹231" }).click();
+
+  await expect(page).toHaveURL(/\/orders\/.+/);
+  await expect(page.getByRole("heading", { name: "Order confirmed" })).toBeVisible();
+});
+
+test("TC-6.12 the confirmation page shows order details and the header basket count is 0", async ({ page }) => {
+  await addChickenBiryaniToBasket(page);
+  await loginAs(page, "priya@example.com");
+  await page.goto("/checkout");
+  await page.getByRole("button", { name: "Pay ₹231" }).click();
+  await expect(page).toHaveURL(/\/orders\/.+/);
+
+  await expect(page.getByRole("heading", { name: "Order confirmed" })).toBeVisible();
+  await expect(page.getByText(/Order #\d+/)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Ranganathan Street Biryani" })).toBeVisible();
+  await expect(page.getByText("45 Ranganathan Street, T Nagar, Chennai")).toBeVisible();
+  await expect(page.getByText("Chicken Biryani")).toBeVisible();
+  await expect(page.getByText("Payment: Paid (simulated)")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Basket", exact: true })).toBeVisible();
+});
+
+test("TC-6.13 reloading the confirmation page shows the same order", async ({ page }) => {
+  await addChickenBiryaniToBasket(page);
+  await loginAs(page, "priya@example.com");
+  await page.goto("/checkout");
+  await page.getByRole("button", { name: "Pay ₹231" }).click();
+  await expect(page).toHaveURL(/\/orders\/.+/);
+  const url = page.url();
+
+  await page.reload();
+  await expect(page).toHaveURL(url);
+  await expect(page.getByRole("heading", { name: "Order confirmed" })).toBeVisible();
+});
+
+test("TC-6.14 another customer cannot view someone else's confirmation", async ({ page, context }) => {
+  await addChickenBiryaniToBasket(page);
+  await loginAs(page, "priya@example.com");
+  await page.goto("/checkout");
+  await page.getByRole("button", { name: "Pay ₹231" }).click();
+  await expect(page).toHaveURL(/\/orders\/.+/);
+  const orderUrl = page.url();
+
+  await context.clearCookies();
+  await loginAs(page, "arjun@example.com");
+  await page.goto(orderUrl);
+  await expect(page.getByText("This page could not be found.")).toBeVisible();
+});
+
+test("TC-6.15 a logged-out visitor is asked to log in and returned to the confirmation", async ({ page, context }) => {
+  await addChickenBiryaniToBasket(page);
+  await loginAs(page, "priya@example.com");
+  await page.goto("/checkout");
+  await page.getByRole("button", { name: "Pay ₹231" }).click();
+  await expect(page).toHaveURL(/\/orders\/.+/);
+  const orderUrl = page.url();
+
+  await context.clearCookies();
+  await page.goto(orderUrl);
+  await expect(page).toHaveURL(/\/login\?next=/);
+
+  await page.getByLabel("Email").fill("priya@example.com");
+  await page.getByLabel("Password").fill("password123");
+  await page.getByRole("button", { name: "Log in" }).click();
+
+  await expect(page).toHaveURL(orderUrl);
+  await expect(page.getByRole("heading", { name: "Order confirmed" })).toBeVisible();
+});
+
+test("TC-6.16 a payment-failed order's URL is not found", async ({ page }) => {
+  await addChickenBiryaniToBasket(page);
+  await loginAs(page, "priya@example.com");
+  await page.goto("/checkout");
+  await page.getByLabel("Simulate failed payment").check();
+  await page.getByRole("button", { name: "Pay ₹231" }).click();
+  await expect(
+    page.getByText("Payment failed. You have not been charged. Please try again."),
+  ).toBeVisible();
+
+  const failedOrder = await testDb.order.findFirst({
+    where: { status: "PAYMENT_FAILED" },
+    orderBy: { createdAt: "desc" },
+  });
+  await page.goto(`/orders/${failedOrder!.id}`);
+  await expect(page.getByText("This page could not be found.")).toBeVisible();
+});

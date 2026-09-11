@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useReducer, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useReducer, useState } from "react";
 import {
   basketReducer,
   parseStoredBasket,
@@ -13,20 +13,27 @@ const STORAGE_KEY = "tnagar-basket";
 
 type BasketContextValue = {
   basket: Basket;
+  // False until the persisted basket has been read from localStorage. A
+  // consumer that redirects when the basket looks empty (checkout) MUST
+  // wait for this — child effects run before a parent provider's effects on
+  // mount, so without this flag such a redirect fires against the initial
+  // empty state before hydration has had a chance to run.
+  hydrated: boolean;
   itemCount: number;
   addItem: (item: NewBasketItem) => void;
   increment: (itemId: string) => void;
   decrement: (itemId: string) => void;
   remove: (itemId: string) => void;
   clear: () => void;
+  refreshBasket: (basket: Basket) => void;
 };
 
 const BasketContext = createContext<BasketContextValue | null>(null);
 
 export function BasketProvider({ children }: { children: React.ReactNode }) {
   const [basket, dispatch] = useReducer(basketReducer, EMPTY_BASKET);
+  const [hydrated, setHydrated] = useState(false);
   const [pendingItem, setPendingItem] = useState<NewBasketItem | null>(null);
-  const isFirstRender = useRef(true);
 
   // Read the persisted basket once on mount (localStorage isn't available
   // during SSR, and reading it during the initial client render would cause
@@ -36,18 +43,20 @@ export function BasketProvider({ children }: { children: React.ReactNode }) {
       type: "applyServerRefresh",
       basket: parseStoredBasket(window.localStorage.getItem(STORAGE_KEY)),
     });
+    // Both updates come from this one synchronous localStorage read; hydrated
+    // must flip in the same commit as the dispatch above, not a later one.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setHydrated(true);
   }, []);
 
-  // Skip the very first run: it fires before the hydration dispatch above
-  // has taken effect, and would otherwise overwrite localStorage with the
-  // still-empty initial state.
+  // Guarded by `hydrated`, not a "first run" ref: the dispatch above and this
+  // write are two renders apart (React commits the reducer update on its own
+  // pass), so only gating on render order — rather than on whether hydration
+  // has actually landed — would still risk writing the pre-hydration state.
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
+    if (!hydrated) return;
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(basket));
-  }, [basket]);
+  }, [basket, hydrated]);
 
   function addItem(item: NewBasketItem) {
     if (basket.restaurantSlug && basket.restaurantSlug !== item.restaurantSlug) {
@@ -74,12 +83,14 @@ export function BasketProvider({ children }: { children: React.ReactNode }) {
     <BasketContext.Provider
       value={{
         basket,
+        hydrated,
         itemCount,
         addItem,
         increment: (itemId) => dispatch({ type: "increment", itemId }),
         decrement: (itemId) => dispatch({ type: "decrement", itemId }),
         remove: (itemId) => dispatch({ type: "remove", itemId }),
         clear: () => dispatch({ type: "clear" }),
+        refreshBasket: (nextBasket) => dispatch({ type: "applyServerRefresh", basket: nextBasket }),
       }}
     >
       {children}

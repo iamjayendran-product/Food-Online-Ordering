@@ -4,6 +4,7 @@ import { basketReducer, parseStoredBasket, EMPTY_BASKET, MAX_QTY, type NewBasket
 const item: NewBasketItem = {
   restaurantSlug: "r1",
   restaurantName: "R1",
+  restaurantAddress: "1 Test Street",
   itemId: "i1",
   name: "Item 1",
   unitPricePaise: 10000,

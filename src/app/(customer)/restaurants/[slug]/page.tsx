@@ -31,6 +31,7 @@ export default async function RestaurantPage({
                   item={item}
                   restaurantSlug={menu.slug}
                   restaurantName={menu.name}
+                  restaurantAddress={menu.address}
                 />
               ))}
             </ul>

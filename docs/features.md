@@ -18,8 +18,8 @@ This is the single place to see what's being built, in what order, and where eac
 | F2 | Restaurant discovery | P0-2 | F0 | TC-2.1–2.7 (7) | **Done** | PASS (round 1/1) | 2026-09-11 |
 | F3 | Restaurant menu | P0-3 | F2 | TC-3.1–3.7 (7) | **Done** | PASS (round 1/1) | 2026-09-11 |
 | F4 | Basket | P0-4 | F3 | TC-4.1–4.12 (12) | **Done** | PASS (round 1/1) | 2026-09-11 |
-| F5 | Checkout | P0-5 | F1, F4 | TC-5.1–5.5 (5) | Not started | none | none |
-| F6 | Place order and confirmation | P0-6 | F5 | TC-6.1–6.16 (16) + TC-J.1 | Not started | none | none |
+| F5 | Checkout | P0-5 | F1, F4 | TC-5.1–5.5 (5) | **Done** | PASS (round 1/1, reviewed with F6) | 2026-09-11 |
+| F6 | Place order and confirmation | P0-6 | F5 | TC-6.1–6.16 (16) + TC-J.1 | **Done** | PASS (round 1/1, reviewed with F5) | 2026-09-11 |
 
 **Build order:** F0 → F1 → F2 → F3 → F4 → F5 → F6, one feature per cycle.
 
@@ -207,6 +207,8 @@ This is the single place to see what's being built, in what order, and where eac
 
 **Test cases:** TC-5.1 to TC-5.5 (5 browser)
 
+**Built together with F6, 2026-09-11** (TC-5.5 needs a real order to exist to verify "exactly one order," which is F6's mechanism — see F6 notes below). Extended `Basket`/`NewBasketItem` (F4) with `restaurantAddress`, threaded from `AddToBasketButton` through `MenuItemRow`, so checkout can show the pickup address without a server round trip.
+
 ---
 
 ## F6: Place order and confirmation (P0-6)
@@ -229,6 +231,15 @@ This is the single place to see what's being built, in what order, and where eac
 
 **When F6 is Done:** the v1 customer journey is complete. Update README (setup, demo accounts, test and review commands) and CLAUDE.md (current state, Server Actions, Playwright-only testing, review gate).
 
+**Built 2026-09-11. Real bugs found and fixed during development (not planted — genuine issues), all caught before or independent of the reviewer:**
+1. **Test-harness isolation gap (pre-existing since F0, only now surfaced):** `playwright.config.ts` only pointed the spawned dev-server *child process* at `TEST_DATABASE_URL`. Logic tests import `src/lib/db.ts` directly — no HTTP hop through that child process — so they'd been silently querying the **dev** database this whole time. F1–F4's logic tests never noticed because both databases carry identical seed data and no test compared row IDs. Fixed by setting `process.env.DATABASE_URL` in the config process itself, which Playwright's workers inherit.
+2. **Hydration race in `CheckoutView`:** its "redirect to `/basket` if empty" effect is a *child* of `BasketProvider`, so on mount it runs *before* the provider's own hydration effect (child effects fire before parent effects) — it saw the still-empty initial state and redirected away before real basket data ever loaded. Fixed by exposing a `hydrated` flag from `BasketProvider` and gating the redirect (and the render) on it.
+3. **Clearing the basket on a successful order raced its own success navigation:** `clear()` drops `lines.length` to 0 on the still-mounted checkout page, which the same "redirect if empty" effect would catch and win against `router.push('/orders/<id>')`. Fixed with a `hasPlacedOrderRef` guard.
+4. **`proxy.ts`'s blanket redirect also caught Server Action requests**, not just page navigations. Clearing cookies mid-checkout and clicking Pay sent the *action's own* POST through the login redirect, and a plain HTTP redirect in front of a Server Action breaks Next's action client runtime ("unexpected response from the server") instead of reaching `placeOrderAction`'s own `UNAUTHENTICATED` handling. Fixed by skipping the redirect when the request carries Next's `next-action` header — every action here already re-checks auth itself, so this doesn't weaken protection.
+5. **Double-submit guard needed a ref, not state:** a `pending` *state* check in `handlePay` isn't guaranteed to have committed before a second, near-simultaneous click reaches the handler (stale closure). Switched to a synchronous `payingRef`. TC-5.5 verifies this with two native `button.click()` calls dispatched back-to-back via `page.evaluate` (Playwright's own `.click()` can't stress this — it retries actionability against whatever page is current, which fights a click that triggers navigation).
+
+Reviewer: `PASS` on the first round for both F5 and F6 — no additional defects found.
+
 ---
 
 ## Change log
@@ -245,3 +256,5 @@ This is the single place to see what's being built, in what order, and where eac
 | 2026-09-11 | F3 built and reviewed (PASS, round 1). |
 | 2026-09-11 | F3 signed off and committed (commit c1e8045). F4 (basket) started. |
 | 2026-09-11 | F4 built and reviewed (PASS, round 1). |
+| 2026-09-11 | F4 signed off and committed (commit bc9fc80). F5 (checkout) started. |
+| 2026-09-11 | F5+F6 built together (TC-5.5 depends on F6's order-placement mechanism). Fixed a pre-existing test-harness DB-isolation gap and several real races (basket hydration, proxy vs. Server Actions, double-submit). Reviewer PASS, round 1, both features. |
