@@ -1,8 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -10,4 +8,101 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  createdAt    DateTime @default(now())
+
+  orders Order[]
+}
+
+model Restaurant {
+  id       String   @id @default(cuid())
+  slug     String   @unique
+  name     String
+  cuisines String[]
+  address  String
+  imageUrl String?
+
+  categories MenuCategory[]
+  items      MenuItem[]
+  orders     Order[]
+}
+
+model MenuCategory {
+  id           String @id @default(cuid())
+  restaurantId String
+  name         String
+  sortOrder    Int
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  items      MenuItem[]
+
+  @@unique([restaurantId, name])
+}
+
+model MenuItem {
+  id           String  @id @default(cuid())
+  restaurantId String
+  categoryId   String
+  name         String
+  description  String?
+  pricePaise   Int
+  isVeg        Boolean
+  isAvailable  Boolean @default(true)
+  imageUrl     String?
+  sortOrder    Int
+
+  restaurant Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  category   MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  orderItems OrderItem[]
+
+  @@unique([categoryId, name])
+  @@index([restaurantId])
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAYMENT_FAILED
+  PLACED
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  orderNumber     Int         @unique @default(autoincrement())
+  userId          String
+  restaurantId    String
+  status          OrderStatus
+  subtotalPaise   Int
+  gstPaise        Int
+  totalPaise      Int
+  paymentProvider String
+  paymentRef      String?
+  createdAt       DateTime    @default(now())
+
+  user       User        @relation(fields: [userId], references: [id])
+  restaurant Restaurant  @relation(fields: [restaurantId], references: [id])
+  items      OrderItem[]
+
+  @@index([userId])
+  @@index([restaurantId])
+}
+
+model OrderItem {
+  id              String @id @default(cuid())
+  orderId         String
+  menuItemId      String
+  name            String
+  unitPricePaise  Int
+  quantity        Int
+  lineTotalPaise  Int
+
+  order    Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItem MenuItem @relation(fields: [menuItemId], references: [id])
+
+  @@index([orderId])
 }
