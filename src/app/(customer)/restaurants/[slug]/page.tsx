@@ -1,4 +1,8 @@
 import { notFound } from "next/navigation";
+import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
+import Typography from "@mui/material/Typography";
+import PlaceOutlinedIcon from "@mui/icons-material/PlaceOutlined";
 import { getRestaurantMenu } from "@/lib/restaurants";
 import { MenuItemRow } from "@/components/menu-item-row";
 
@@ -15,16 +19,70 @@ export default async function RestaurantPage({
   }
 
   return (
-    <div>
-      <h1 className="text-2xl font-semibold">{menu.name}</h1>
-      <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{menu.cuisines.join(", ")}</p>
-      <p className="text-sm text-zinc-500 dark:text-zinc-400">{menu.address}</p>
+    <Box>
+      <Box
+        sx={{
+          borderRadius: 4,
+          px: { xs: 2.5, sm: 4 },
+          py: { xs: 3, sm: 4 },
+          mb: 3,
+          backgroundColor: "#FAF7F2",
+          border: "1px solid",
+          borderColor: "divider",
+        }}
+      >
+        <Typography variant="h1">{menu.name}</Typography>
+        <Typography color="text.secondary" sx={{ mt: 0.75 }}>
+          {menu.cuisines.join(", ")}
+        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 1.5 }}>
+          <PlaceOutlinedIcon fontSize="small" sx={{ color: "text.secondary" }} />
+          <Typography variant="body2" color="text.secondary">
+            {menu.address}
+          </Typography>
+        </Box>
+        <Chip
+          label="Pickup only"
+          size="small"
+          sx={{ mt: 2, backgroundColor: "#FFFFFF", border: "1px solid", borderColor: "divider" }}
+        />
+      </Box>
 
-      <div className="mt-6 flex flex-col gap-8">
+      {menu.categories.length > 1 && (
+        <Box
+          sx={{
+            display: "flex",
+            gap: 1,
+            overflowX: "auto",
+            pb: 1.5,
+            mb: 1,
+            position: "sticky",
+            top: { xs: 60, sm: 68 },
+            zIndex: 1,
+            backgroundColor: "background.default",
+            "&::-webkit-scrollbar": { display: "none" },
+          }}
+        >
+          {menu.categories.map((category) => (
+            <Chip
+              key={category.id}
+              component="a"
+              href={`#category-${category.id}`}
+              clickable
+              label={category.name}
+              sx={{ flexShrink: 0 }}
+            />
+          ))}
+        </Box>
+      )}
+
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
         {menu.categories.map((category) => (
-          <section key={category.id}>
-            <h2 className="mb-2 text-lg font-semibold">{category.name}</h2>
-            <ul>
+          <Box component="section" key={category.id} id={`category-${category.id}`}>
+            <Typography variant="h2" component="h2" sx={{ mb: 0.5 }}>
+              {category.name}
+            </Typography>
+            <Box component="ul" sx={{ listStyle: "none", m: 0, p: 0 }}>
               {category.items.map((item) => (
                 <MenuItemRow
                   key={item.id}
@@ -34,10 +92,10 @@ export default async function RestaurantPage({
                   restaurantAddress={menu.address}
                 />
               ))}
-            </ul>
-          </section>
+            </Box>
+          </Box>
         ))}
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 }

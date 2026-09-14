@@ -1,3 +1,5 @@
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
 import { formatInr } from "@/lib/format";
 import { VegMarker } from "@/components/veg-marker";
 import { AddToBasketButton } from "@/components/add-to-basket-button";
@@ -10,22 +12,49 @@ type MenuItemRowProps = {
   restaurantAddress: string;
 };
 
-export function MenuItemRow({ item, restaurantSlug, restaurantName, restaurantAddress }: MenuItemRowProps) {
+export function MenuItemRow({
+  item,
+  restaurantSlug,
+  restaurantName,
+  restaurantAddress,
+}: MenuItemRowProps) {
   return (
-    <li className="flex items-start justify-between gap-4 border-b border-black/10 py-3 last:border-b-0 dark:border-white/10">
-      <div className="flex gap-2">
-        <VegMarker isVeg={item.isVeg} />
-        <div>
-          <p className="font-medium">{item.name}</p>
+    <Box
+      component="li"
+      sx={{
+        display: "flex",
+        alignItems: "flex-start",
+        justifyContent: "space-between",
+        gap: 2,
+        py: 2,
+        borderBottom: "1px solid",
+        borderColor: "divider",
+        "&:last-of-type": { borderBottom: "none" },
+        opacity: item.isAvailable ? 1 : 0.72,
+      }}
+    >
+      <Box sx={{ display: "flex", gap: 1.25, minWidth: 0 }}>
+        <Box sx={{ pt: 0.35 }}>
+          <VegMarker isVeg={item.isVeg} />
+        </Box>
+        <Box sx={{ minWidth: 0 }}>
+          <Typography sx={{ fontWeight: 600 }}>{item.name}</Typography>
           {item.description && (
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">{item.description}</p>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+              {item.description}
+            </Typography>
           )}
-          <p className="mt-1 text-sm font-medium">{formatInr(item.pricePaise)}</p>
+          <Typography sx={{ mt: 0.75, fontWeight: 600 }}>
+            {formatInr(item.pricePaise)}
+          </Typography>
           {!item.isAvailable && (
-            <p className="mt-1 text-sm text-red-600">Currently unavailable</p>
+            <Typography variant="body2" color="error.main" sx={{ mt: 0.5 }}>
+              Currently unavailable
+            </Typography>
           )}
-        </div>
-      </div>
+        </Box>
+      </Box>
+
       <AddToBasketButton
         isAvailable={item.isAvailable}
         restaurantSlug={restaurantSlug}
@@ -35,6 +64,6 @@ export function MenuItemRow({ item, restaurantSlug, restaurantName, restaurantAd
         name={item.name}
         unitPricePaise={item.pricePaise}
       />
-    </li>
+    </Box>
   );
 }

@@ -1,22 +1,45 @@
-import Link from "next/link";
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import Chip from "@mui/material/Chip";
+import Typography from "@mui/material/Typography";
 import { RestaurantImage } from "@/components/restaurant-image";
+import { LinkCardActionArea } from "@/components/next-link-mui";
 import type { RestaurantCard as RestaurantCardData } from "@/lib/restaurants";
 
 export function RestaurantCard({ restaurant }: { restaurant: RestaurantCardData }) {
   return (
-    <Link
-      href={`/restaurants/${restaurant.slug}`}
-      className="block rounded-lg border border-black/10 p-3 transition hover:border-black/30 dark:border-white/10 dark:hover:border-white/30"
+    <Card
+      sx={{
+        height: "100%",
+        overflow: "hidden",
+        transition: "transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease",
+        "&:hover": {
+          transform: "translateY(-2px)",
+          borderColor: "primary.light",
+          boxShadow: "0 10px 28px rgba(28, 25, 23, 0.10)",
+        },
+        "&:hover .restaurant-card__media": { transform: "scale(1.04)" },
+      }}
     >
-      <RestaurantImage name={restaurant.name} imageUrl={restaurant.imageUrl} />
-      <h2 className="mt-3 font-semibold">{restaurant.name}</h2>
-      <ul className="mt-1 flex flex-wrap gap-1 text-xs text-zinc-500 dark:text-zinc-400">
-        {restaurant.cuisines.map((cuisine) => (
-          <li key={cuisine} className="rounded-full bg-zinc-100 px-2 py-0.5 dark:bg-zinc-800">
-            {cuisine}
-          </li>
-        ))}
-      </ul>
-    </Link>
+      <LinkCardActionArea
+        href={`/restaurants/${restaurant.slug}`}
+        sx={{ display: "block", height: "100%" }}
+      >
+        <Box sx={{ overflow: "hidden" }}>
+          <RestaurantImage name={restaurant.name} imageUrl={restaurant.imageUrl} />
+        </Box>
+        <CardContent sx={{ px: 2, py: 1.75 }}>
+          <Typography variant="h3" component="h2">
+            {restaurant.name}
+          </Typography>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, mt: 1 }}>
+            {restaurant.cuisines.map((cuisine) => (
+              <Chip key={cuisine} label={cuisine} size="small" />
+            ))}
+          </Box>
+        </CardContent>
+      </LinkCardActionArea>
+    </Card>
   );
 }

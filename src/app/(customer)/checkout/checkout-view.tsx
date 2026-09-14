@@ -2,6 +2,18 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Alert from "@mui/material/Alert";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Card from "@mui/material/Card";
+import Divider from "@mui/material/Divider";
+import FormControl from "@mui/material/FormControl";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import FormLabel from "@mui/material/FormLabel";
+import Radio from "@mui/material/Radio";
+import RadioGroup from "@mui/material/RadioGroup";
+import Typography from "@mui/material/Typography";
+import PlaceOutlinedIcon from "@mui/icons-material/PlaceOutlined";
 import { useBasket } from "@/components/basket-provider";
 import { calculateTotals } from "@/lib/pricing";
 import { formatInr } from "@/lib/format";
@@ -78,7 +90,9 @@ export function CheckoutView() {
 
     if (result.status === "PRICE_CHANGED") {
       payingRef.current = false;
-      const correctedByItemId = new Map(result.correctedLines.map((line) => [line.itemId, line.unitPricePaise]));
+      const correctedByItemId = new Map(
+        result.correctedLines.map((line) => [line.itemId, line.unitPricePaise]),
+      );
       refreshBasket({
         ...basket,
         lines: basket.lines.map((line) =>
@@ -103,89 +117,146 @@ export function CheckoutView() {
   }
 
   return (
-    <div>
-      <h1 className="text-2xl font-semibold">Checkout</h1>
+    <Box>
+      <Typography variant="h1">Checkout</Typography>
 
-      <section className="mt-4">
-        <h2 className="font-semibold">{basket.restaurantName}</h2>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">{basket.restaurantAddress}</p>
-        <p className="mt-1 text-sm">Pickup only: collect at the counter</p>
-      </section>
-
-      <ul className="mt-4 flex flex-col gap-2">
-        {basket.lines.map((line) => (
-          <li key={line.itemId} className="flex items-center justify-between gap-4">
-            <p>
-              {line.name} × {line.quantity}
-              {unavailableItemIds.includes(line.itemId) && (
-                <>
-                  <span className="ml-2 text-sm text-red-600">No longer available</span>
-                  <button
-                    type="button"
-                    onClick={() => removeUnavailable(line.itemId)}
-                    className="ml-2 text-sm underline"
-                  >
-                    Remove
-                  </button>
-                </>
-              )}
-            </p>
-            <p className="text-sm font-medium">{formatInr(line.unitPricePaise * line.quantity)}</p>
-          </li>
-        ))}
-      </ul>
-
-      <div className="mt-4 flex flex-col items-end gap-1 text-sm">
-        <p>Subtotal: {formatInr(totals.subtotalPaise)}</p>
-        <p>GST (5%): {formatInr(totals.gstPaise)}</p>
-        <p className="font-semibold">Total: {formatInr(totals.totalPaise)}</p>
-      </div>
-
-      {priceNotice && (
-        <p className="mt-4 text-sm text-amber-600">
-          Prices changed since you added these items. Your basket has been updated — please review the new
-          total.
-        </p>
-      )}
-
-      {unavailableItemIds.length > 0 && (
-        <p className="mt-4 text-sm text-red-600">
-          Some items are no longer available. Remove them from your basket to continue.
-        </p>
-      )}
-
-      {failureMessage && <p className="mt-4 text-sm text-red-600">{failureMessage}</p>}
-
-      <fieldset className="mt-6">
-        <legend className="text-sm font-medium">Payment</legend>
-        <label className="mt-2 flex items-center gap-2 text-sm">
-          <input
-            type="radio"
-            name="payment"
-            checked={paymentChoice === "success"}
-            onChange={() => setPaymentChoice("success")}
-          />
-          Simulate successful payment
-        </label>
-        <label className="mt-1 flex items-center gap-2 text-sm">
-          <input
-            type="radio"
-            name="payment"
-            checked={paymentChoice === "failure"}
-            onChange={() => setPaymentChoice("failure")}
-          />
-          Simulate failed payment
-        </label>
-      </fieldset>
-
-      <button
-        type="button"
-        onClick={handlePay}
-        disabled={pending || unavailableItemIds.length > 0}
-        className="mt-4 rounded bg-black px-4 py-2 text-sm text-white disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-black"
+      <Box
+        sx={{
+          display: "grid",
+          gap: 3,
+          mt: 3,
+          gridTemplateColumns: { xs: "1fr", md: "minmax(0, 1fr) 340px" },
+          alignItems: "start",
+        }}
       >
-        Pay {formatInr(totals.totalPaise)}
-      </button>
-    </div>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+          <Card component="section" sx={{ p: 3 }}>
+            <Typography variant="h3" component="h2">{basket.restaurantName}</Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 1 }}>
+              <PlaceOutlinedIcon fontSize="small" sx={{ color: "text.secondary" }} />
+              <Typography variant="body2" color="text.secondary">
+                {basket.restaurantAddress}
+              </Typography>
+            </Box>
+            <Typography variant="body2" sx={{ mt: 1.5 }}>
+              Pickup only: collect at the counter
+            </Typography>
+          </Card>
+
+          <Card sx={{ px: 3, py: 1 }}>
+            <Box component="ul" sx={{ listStyle: "none", m: 0, p: 0 }}>
+              {basket.lines.map((line) => (
+                <Box
+                  component="li"
+                  key={line.itemId}
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 2,
+                    py: 1.75,
+                    borderBottom: "1px solid",
+                    borderColor: "divider",
+                    "&:last-of-type": { borderBottom: "none" },
+                  }}
+                >
+                  <Typography component="p">
+                    {line.name} × {line.quantity}
+                    {unavailableItemIds.includes(line.itemId) && (
+                      <>
+                        <Box
+                          component="span"
+                          sx={{ ml: 1, fontSize: "0.875rem", color: "error.main" }}
+                        >
+                          No longer available
+                        </Box>
+                        <Button
+                          size="small"
+                          color="inherit"
+                          sx={{ ml: 1 }}
+                          onClick={() => removeUnavailable(line.itemId)}
+                        >
+                          Remove
+                        </Button>
+                      </>
+                    )}
+                  </Typography>
+                  <Typography sx={{ fontWeight: 600 }}>
+                    {formatInr(line.unitPricePaise * line.quantity)}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+          </Card>
+
+          <Card sx={{ p: 3 }}>
+            <FormControl>
+              <FormLabel sx={{ fontWeight: 600, color: "text.primary" }}>Payment</FormLabel>
+              <RadioGroup
+                value={paymentChoice}
+                onChange={(event) =>
+                  setPaymentChoice(event.target.value === "failure" ? "failure" : "success")
+                }
+                sx={{ mt: 1 }}
+              >
+                <FormControlLabel
+                  value="success"
+                  control={<Radio size="small" />}
+                  label="Simulate successful payment"
+                />
+                <FormControlLabel
+                  value="failure"
+                  control={<Radio size="small" />}
+                  label="Simulate failed payment"
+                />
+              </RadioGroup>
+            </FormControl>
+          </Card>
+        </Box>
+
+        <Card sx={{ p: 3, position: { md: "sticky" }, top: { md: 88 } }}>
+          <Typography variant="h3" component="h2" sx={{ mb: 2 }}>
+            Order summary
+          </Typography>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}>
+            <Typography variant="body2">Subtotal: {formatInr(totals.subtotalPaise)}</Typography>
+            <Typography variant="body2">GST (5%): {formatInr(totals.gstPaise)}</Typography>
+            <Divider sx={{ my: 1 }} />
+            <Typography sx={{ fontWeight: 700 }}>
+              Total: {formatInr(totals.totalPaise)}
+            </Typography>
+          </Box>
+
+          {priceNotice && (
+            <Alert severity="warning" sx={{ mt: 2 }}>
+              Prices changed since you added these items. Your basket has been updated — please
+              review the new total.
+            </Alert>
+          )}
+
+          {unavailableItemIds.length > 0 && (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              Some items are no longer available. Remove them from your basket to continue.
+            </Alert>
+          )}
+
+          {failureMessage && (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              {failureMessage}
+            </Alert>
+          )}
+
+          <Button
+            variant="contained"
+            fullWidth
+            onClick={handlePay}
+            disabled={pending || unavailableItemIds.length > 0}
+            sx={{ mt: 3, height: 48 }}
+          >
+            Pay {formatInr(totals.totalPaise)}
+          </Button>
+        </Card>
+      </Box>
+    </Box>
   );
 }

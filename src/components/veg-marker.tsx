@@ -1,15 +1,26 @@
+import Box from "@mui/material/Box";
+
 export function VegMarker({ isVeg }: { isVeg: boolean }) {
   const label = isVeg ? "Vegetarian" : "Non-vegetarian";
-  const color = isVeg ? "border-green-600" : "border-red-600";
-  const dotColor = isVeg ? "bg-green-600" : "bg-red-600";
+  const color = isVeg ? "success.main" : "error.main";
 
   return (
-    <span
+    <Box
       role="img"
       aria-label={label}
-      className={`inline-flex h-4 w-4 shrink-0 items-center justify-center border ${color}`}
+      sx={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexShrink: 0,
+        height: 16,
+        width: 16,
+        borderRadius: "3px",
+        border: "1.5px solid",
+        borderColor: color,
+      }}
     >
-      <span className={`h-2 w-2 rounded-full ${dotColor}`} />
-    </span>
+      <Box sx={{ height: 8, width: 8, borderRadius: "50%", backgroundColor: color }} />
+    </Box>
   );
 }

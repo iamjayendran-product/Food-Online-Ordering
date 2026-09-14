@@ -1,4 +1,11 @@
 import { notFound } from "next/navigation";
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import Chip from "@mui/material/Chip";
+import Divider from "@mui/material/Divider";
+import Typography from "@mui/material/Typography";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import PlaceOutlinedIcon from "@mui/icons-material/PlaceOutlined";
 import { requireUser } from "@/lib/dal";
 import { getPlacedOrderForUser } from "@/lib/orders/get-order";
 import { formatInr } from "@/lib/format";
@@ -23,35 +30,67 @@ export default async function OrderConfirmationPage({
   }).format(order.createdAt);
 
   return (
-    <div>
-      <h1 className="text-2xl font-semibold">Order confirmed</h1>
-      <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Order #{order.orderNumber}</p>
+    <Box sx={{ maxWidth: 640, mx: "auto" }}>
+      <Box sx={{ textAlign: "center", py: 2 }}>
+        <CheckCircleIcon sx={{ fontSize: 56, color: "primary.main" }} />
+        <Typography variant="h1" sx={{ mt: 1 }}>
+          Order confirmed
+        </Typography>
+        <Chip label={`Order #${order.orderNumber}`} sx={{ mt: 1.5, fontWeight: 600 }} />
+      </Box>
 
-      <section className="mt-4">
-        <h2 className="font-semibold">{order.restaurant.name}</h2>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">{order.restaurant.address}</p>
-        <p className="mt-1 text-sm">Pickup: ASAP</p>
-      </section>
+      <Card component="section" sx={{ p: 3, mt: 2 }}>
+        <Typography variant="h3" component="h2">{order.restaurant.name}</Typography>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 1 }}>
+          <PlaceOutlinedIcon fontSize="small" sx={{ color: "text.secondary" }} />
+          <Typography variant="body2" color="text.secondary">
+            {order.restaurant.address}
+          </Typography>
+        </Box>
+        <Typography variant="body2" sx={{ mt: 1.5, fontWeight: 600 }}>
+          Pickup: ASAP
+        </Typography>
+      </Card>
 
-      <ul className="mt-4 flex flex-col gap-2">
-        {order.items.map((item) => (
-          <li key={item.id} className="flex items-center justify-between gap-4">
-            <p>
-              {item.name} × {item.quantity}
-            </p>
-            <p className="text-sm font-medium">{formatInr(item.lineTotalPaise)}</p>
-          </li>
-        ))}
-      </ul>
+      <Card sx={{ px: 3, py: 1, mt: 3 }}>
+        <Box component="ul" sx={{ listStyle: "none", m: 0, p: 0 }}>
+          {order.items.map((item) => (
+            <Box
+              component="li"
+              key={item.id}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 2,
+                py: 1.75,
+                borderBottom: "1px solid",
+                borderColor: "divider",
+                "&:last-of-type": { borderBottom: "none" },
+              }}
+            >
+              <Typography component="p">
+                {item.name} × {item.quantity}
+              </Typography>
+              <Typography sx={{ fontWeight: 600 }}>{formatInr(item.lineTotalPaise)}</Typography>
+            </Box>
+          ))}
+        </Box>
+      </Card>
 
-      <div className="mt-4 flex flex-col items-end gap-1 text-sm">
-        <p>Subtotal: {formatInr(order.subtotalPaise)}</p>
-        <p>GST (5%): {formatInr(order.gstPaise)}</p>
-        <p className="font-semibold">Total: {formatInr(order.totalPaise)}</p>
-      </div>
-
-      <p className="mt-4 text-sm">Payment: Paid (simulated)</p>
-      <p className="text-sm text-zinc-500 dark:text-zinc-400">{placedAt} IST</p>
-    </div>
+      <Card sx={{ p: 3, mt: 3 }}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}>
+          <Typography variant="body2">Subtotal: {formatInr(order.subtotalPaise)}</Typography>
+          <Typography variant="body2">GST (5%): {formatInr(order.gstPaise)}</Typography>
+          <Divider sx={{ my: 1 }} />
+          <Typography sx={{ fontWeight: 700 }}>Total: {formatInr(order.totalPaise)}</Typography>
+        </Box>
+        <Divider sx={{ my: 2 }} />
+        <Typography variant="body2">Payment: Paid (simulated)</Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+          {placedAt} IST
+        </Typography>
+      </Card>
+    </Box>
   );
 }

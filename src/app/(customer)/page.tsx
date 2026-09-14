@@ -1,6 +1,12 @@
-import Link from "next/link";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import InputAdornment from "@mui/material/InputAdornment";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
+import SearchIcon from "@mui/icons-material/Search";
 import { listRestaurants } from "@/lib/restaurants";
 import { RestaurantCard } from "@/components/restaurant-card";
+import { TextLink } from "@/components/next-link-mui";
 
 export default async function HomePage({
   searchParams,
@@ -11,38 +17,93 @@ export default async function HomePage({
   const restaurants = await listRestaurants(q);
 
   return (
-    <div>
-      <form className="mb-6 flex gap-2">
-        <input
-          type="search"
-          name="q"
-          defaultValue={q ?? ""}
-          placeholder="Search restaurants"
-          aria-label="Search restaurants"
-          className="w-full max-w-sm rounded border border-black/20 px-3 py-2 dark:border-white/20"
-        />
-        <button
-          type="submit"
-          className="rounded bg-black px-4 py-2 text-white dark:bg-white dark:text-black"
+    <Box>
+      <Box
+        sx={{
+          borderRadius: 4,
+          px: { xs: 2.5, sm: 5 },
+          py: { xs: 4, sm: 6 },
+          mb: 4,
+          // Literal, not an sx callback: a theme callback is a function, and a
+          // Server Component can't pass one to a Client Component.
+          background: "linear-gradient(135deg, #5C3A16 0%, #CD7F32 100%)",
+          color: "#FFFFFF",
+        }}
+      >
+        <Typography variant="h1" sx={{ maxWidth: 560, fontSize: { xs: "1.75rem", sm: "2.25rem" } }}>
+          Order ahead. Skip the queue.
+        </Typography>
+        <Typography sx={{ mt: 1, mb: 3, opacity: 0.92 }}>
+          Pickup from restaurants across T Nagar, Chennai.
+        </Typography>
+
+        <Box
+          component="form"
+          sx={{ display: "flex", gap: 1.5, maxWidth: 560, flexWrap: { xs: "wrap", sm: "nowrap" } }}
         >
-          Search
-        </button>
-      </form>
+          <TextField
+            type="search"
+            name="q"
+            defaultValue={q ?? ""}
+            placeholder="Search restaurants"
+            size="small"
+            fullWidth
+            slotProps={{
+              htmlInput: { "aria-label": "Search restaurants" },
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" sx={{ color: "text.secondary" }} />
+                  </InputAdornment>
+                ),
+                sx: { borderRadius: 999, height: 48 },
+              },
+            }}
+            sx={{ "& fieldset": { border: "none" } }}
+          />
+          <Button
+            type="submit"
+            variant="contained"
+            color="secondary"
+            sx={{ height: 48, flexShrink: 0, px: 3 }}
+          >
+            Search
+          </Button>
+        </Box>
+      </Box>
 
       {restaurants.length === 0 ? (
-        <div className="flex flex-col items-start gap-2">
-          <p>{q ? `No restaurants match "${q}".` : "No restaurants available."}</p>
-          <Link href="/" className="underline">
+        <Box sx={{ py: 6, textAlign: "center" }}>
+          <Typography sx={{ fontWeight: 600 }}>
+            {q ? `No restaurants match "${q}".` : "No restaurants available."}
+          </Typography>
+          <TextLink href="/" sx={{ display: "inline-block", mt: 1.5 }}>
             Clear search
-          </Link>
-        </div>
+          </TextLink>
+        </Box>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {restaurants.map((restaurant) => (
-            <RestaurantCard key={restaurant.id} restaurant={restaurant} />
-          ))}
-        </div>
+        <>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            {restaurants.length} {restaurants.length === 1 ? "restaurant" : "restaurants"}
+            {q ? ` matching "${q}"` : " in T Nagar"}
+          </Typography>
+          <Box
+            sx={{
+              display: "grid",
+              gap: 2.5,
+              gridTemplateColumns: {
+                xs: "1fr",
+                sm: "repeat(2, minmax(0, 1fr))",
+                lg: "repeat(3, minmax(0, 1fr))",
+              },
+            }}
+          >
+            {restaurants.map((restaurant) => (
+              <RestaurantCard key={restaurant.id} restaurant={restaurant} />
+            ))}
+          </Box>
+        </>
       )}
-    </div>
+    </Box>
   );
 }

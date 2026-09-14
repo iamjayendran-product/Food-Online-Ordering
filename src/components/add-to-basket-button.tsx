@@ -1,5 +1,6 @@
 "use client";
 
+import Button from "@mui/material/Button";
 import { useBasket } from "@/components/basket-provider";
 
 type AddToBasketButtonProps = {
@@ -24,15 +25,22 @@ export function AddToBasketButton({
   const { addItem } = useBasket();
 
   return (
-    <button
-      type="button"
+    <Button
+      variant="outlined"
+      size="small"
       disabled={!isAvailable}
       onClick={() =>
         addItem({ restaurantSlug, restaurantName, restaurantAddress, itemId, name, unitPricePaise })
       }
-      className="shrink-0 rounded bg-black px-3 py-1.5 text-sm text-white disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-black"
+      sx={{
+        flexShrink: 0,
+        minWidth: 84,
+        borderColor: "divider",
+        color: "primary.main",
+        "&:hover": { borderColor: "primary.main", backgroundColor: "primary.main", color: "#FFFFFF" },
+      }}
     >
       Add
-    </button>
+    </Button>
   );
 }

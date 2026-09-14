@@ -1,35 +1,58 @@
-import Link from "next/link";
+import AppBar from "@mui/material/AppBar";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Container from "@mui/material/Container";
+import Toolbar from "@mui/material/Toolbar";
+import Typography from "@mui/material/Typography";
 import { getCurrentUser } from "@/lib/dal";
 import { logout } from "@/app/(customer)/login/actions";
 import { BasketLink } from "@/components/basket-link";
+import { LinkButton, LinkTypography } from "@/components/next-link-mui";
 
 export async function SiteHeader() {
   const user = await getCurrentUser();
 
   return (
-    <header className="border-b border-black/10 dark:border-white/10">
-      <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
-        <Link href="/" className="text-lg font-semibold">
-          T Nagar Food
-        </Link>
-        <nav className="flex items-center gap-4 text-sm">
+    <AppBar position="sticky">
+      <Container>
+        <Toolbar disableGutters sx={{ gap: 1.5, minHeight: { xs: 60, sm: 68 } }}>
+          <LinkTypography
+            href="/"
+            sx={{
+              mr: "auto",
+              fontSize: "1.125rem",
+              fontWeight: 700,
+              letterSpacing: "-0.01em",
+              color: "text.primary",
+              textDecoration: "none",
+            }}
+          >
+            T Nagar{" "}
+            <Box component="span" sx={{ color: "primary.main" }}>
+              Food
+            </Box>
+          </LinkTypography>
+
           <BasketLink />
+
           {user ? (
             <>
-              <span>Hi {user.name.split(" ")[0]}</span>
-              <form action={logout}>
-                <button type="submit" className="underline">
+              <Typography variant="body2" color="text.secondary">
+                Hi {user.name.split(" ")[0]}
+              </Typography>
+              <form action={logout} style={{ display: "flex" }}>
+                <Button type="submit" size="small" color="inherit">
                   Logout
-                </button>
+                </Button>
               </form>
             </>
           ) : (
-            <Link href="/login" className="underline">
+            <LinkButton href="/login" size="small" variant="contained">
               Login
-            </Link>
+            </LinkButton>
           )}
-        </nav>
-      </div>
-    </header>
+        </Toolbar>
+      </Container>
+    </AppBar>
   );
 }

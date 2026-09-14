@@ -1,3 +1,7 @@
+import Box from "@mui/material/Box";
+
+const MEDIA_HEIGHT = 168;
+
 function initials(name: string) {
   return name
     .split(" ")
@@ -9,17 +13,47 @@ function initials(name: string) {
 
 export function RestaurantImage({ name, imageUrl }: { name: string; imageUrl: string | null }) {
   if (imageUrl) {
-    // eslint-disable-next-line @next/next/no-img-element -- external, unconfigured image domains
-    return <img src={imageUrl} alt="" className="h-32 w-full rounded object-cover" />;
+    return (
+      <Box
+        component="img"
+        src={imageUrl}
+        alt=""
+        className="restaurant-card__media"
+        sx={{
+          display: "block",
+          height: MEDIA_HEIGHT,
+          width: "100%",
+          objectFit: "cover",
+          transition: "transform 240ms ease",
+        }}
+      />
+    );
   }
 
+  // Deliberately not an <img>: a restaurant without a photo must render no
+  // image element at all, only this labelled stand-in.
   return (
-    <div
+    <Box
       role="img"
       aria-label={name}
-      className="flex h-32 w-full items-center justify-center rounded bg-zinc-200 text-lg font-semibold text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
+      className="restaurant-card__media"
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        height: MEDIA_HEIGHT,
+        width: "100%",
+        // Literal, not an sx callback: a theme callback is a function, and a
+        // Server Component can't pass one to a Client Component.
+        background: "linear-gradient(135deg, #CD7F32 0%, #5C3A16 100%)",
+        color: "#FFFFFF",
+        fontSize: "1.75rem",
+        fontWeight: 700,
+        letterSpacing: "0.02em",
+        transition: "transform 240ms ease",
+      }}
     >
       {initials(name)}
-    </div>
+    </Box>
   );
 }

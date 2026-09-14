@@ -1,6 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Card from "@mui/material/Card";
+import Divider from "@mui/material/Divider";
+import IconButton from "@mui/material/IconButton";
+import Typography from "@mui/material/Typography";
+import AddIcon from "@mui/icons-material/Add";
+import RemoveIcon from "@mui/icons-material/Remove";
+import ShoppingBagOutlinedIcon from "@mui/icons-material/ShoppingBagOutlined";
 import { useBasket } from "@/components/basket-provider";
 import { calculateTotals } from "@/lib/pricing";
 import { formatInr } from "@/lib/format";
@@ -10,81 +19,129 @@ export default function BasketPage() {
 
   if (basket.lines.length === 0) {
     return (
-      <div className="flex flex-col items-start gap-2">
-        <p>Your basket is empty.</p>
-        <Link href="/" className="underline">
+      <Box sx={{ py: 8, textAlign: "center" }}>
+        <ShoppingBagOutlinedIcon sx={{ fontSize: 48, color: "primary.light" }} />
+        <Typography sx={{ mt: 1.5, fontWeight: 600 }}>Your basket is empty.</Typography>
+        <Button component={Link} href="/" variant="contained" sx={{ mt: 3 }}>
           Browse restaurants
-        </Link>
-      </div>
+        </Button>
+      </Box>
     );
   }
 
   const totals = calculateTotals(basket.lines);
 
   return (
-    <div>
-      <h1 className="text-2xl font-semibold">Your basket</h1>
-      <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{basket.restaurantName}</p>
+    <Box>
+      <Typography variant="h1">Your basket</Typography>
+      <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+        {basket.restaurantName}
+      </Typography>
 
-      <ul className="mt-4 flex flex-col gap-3">
-        {basket.lines.map((line) => (
-          <li
-            key={line.itemId}
-            className="flex flex-wrap items-center justify-between gap-4 border-b border-black/10 pb-3 dark:border-white/10"
+      <Box
+        sx={{
+          display: "grid",
+          gap: 3,
+          mt: 3,
+          gridTemplateColumns: { xs: "1fr", md: "minmax(0, 1fr) 320px" },
+          alignItems: "start",
+        }}
+      >
+        <Card sx={{ px: { xs: 2, sm: 3 }, py: 1 }}>
+          <Box component="ul" sx={{ listStyle: "none", m: 0, p: 0 }}>
+            {basket.lines.map((line) => (
+              <Box
+                component="li"
+                key={line.itemId}
+                sx={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 2,
+                  py: 2,
+                  borderBottom: "1px solid",
+                  borderColor: "divider",
+                  "&:last-of-type": { borderBottom: "none" },
+                }}
+              >
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography sx={{ fontWeight: 600 }}>{line.name}</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {formatInr(line.unitPricePaise)} each
+                  </Typography>
+                </Box>
+
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 0.5,
+                      border: "1px solid",
+                      borderColor: "divider",
+                      borderRadius: 999,
+                      px: 0.5,
+                    }}
+                  >
+                    <IconButton
+                      size="small"
+                      aria-label={`Decrease quantity of ${line.name}`}
+                      onClick={() => decrement(line.itemId)}
+                    >
+                      <RemoveIcon fontSize="small" />
+                    </IconButton>
+                    <Typography
+                      aria-label={`Quantity of ${line.name}`}
+                      sx={{ minWidth: 20, textAlign: "center", fontWeight: 600 }}
+                    >
+                      {line.quantity}
+                    </Typography>
+                    <IconButton
+                      size="small"
+                      aria-label={`Increase quantity of ${line.name}`}
+                      onClick={() => increment(line.itemId)}
+                    >
+                      <AddIcon fontSize="small" />
+                    </IconButton>
+                  </Box>
+
+                  <Button size="small" color="inherit" onClick={() => remove(line.itemId)}>
+                    Remove
+                  </Button>
+
+                  <Typography sx={{ minWidth: 72, textAlign: "right", fontWeight: 600 }}>
+                    {formatInr(line.unitPricePaise * line.quantity)}
+                  </Typography>
+                </Box>
+              </Box>
+            ))}
+          </Box>
+        </Card>
+
+        <Card sx={{ p: 3, position: { md: "sticky" }, top: { md: 88 } }}>
+          <Typography variant="h3" component="h2" sx={{ mb: 2 }}>
+            Order summary
+          </Typography>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}>
+            <Typography variant="body2">Subtotal: {formatInr(totals.subtotalPaise)}</Typography>
+            <Typography variant="body2">GST (5%): {formatInr(totals.gstPaise)}</Typography>
+            <Divider sx={{ my: 1 }} />
+            <Typography sx={{ fontWeight: 700 }}>
+              Total: {formatInr(totals.totalPaise)}
+            </Typography>
+          </Box>
+          <Button
+            component={Link}
+            href="/checkout"
+            variant="contained"
+            fullWidth
+            sx={{ mt: 3, height: 48 }}
           >
-            <div>
-              <p className="font-medium">{line.name}</p>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                {formatInr(line.unitPricePaise)} each
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                aria-label={`Decrease quantity of ${line.name}`}
-                onClick={() => decrement(line.itemId)}
-                className="h-7 w-7 rounded border border-black/20 dark:border-white/20"
-              >
-                −
-              </button>
-              <span aria-label={`Quantity of ${line.name}`}>{line.quantity}</span>
-              <button
-                type="button"
-                aria-label={`Increase quantity of ${line.name}`}
-                onClick={() => increment(line.itemId)}
-                className="h-7 w-7 rounded border border-black/20 dark:border-white/20"
-              >
-                +
-              </button>
-              <button
-                type="button"
-                onClick={() => remove(line.itemId)}
-                className="ml-2 text-sm underline"
-              >
-                Remove
-              </button>
-              <span className="ml-2 w-16 text-right text-sm font-medium">
-                {formatInr(line.unitPricePaise * line.quantity)}
-              </span>
-            </div>
-          </li>
-        ))}
-      </ul>
-
-      <div className="mt-4 flex flex-col items-end gap-1 text-sm">
-        <p>Subtotal: {formatInr(totals.subtotalPaise)}</p>
-        <p>GST (5%): {formatInr(totals.gstPaise)}</p>
-        <p className="font-semibold">Total: {formatInr(totals.totalPaise)}</p>
-      </div>
-
-      <div className="mt-4 flex justify-end">
-        <Link
-          href="/checkout"
-          className="rounded bg-black px-4 py-2 text-sm text-white dark:bg-white dark:text-black"
-        >
-          Checkout
-        </Link>
-      </div>
-    </div>
+            Checkout
+          </Button>
+        </Card>
+      </Box>
+    </Box>
   );
 }

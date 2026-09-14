@@ -1,52 +1,46 @@
 "use client";
 
 import { useActionState } from "react";
+import Alert from "@mui/material/Alert";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
 import { login, type LoginState } from "./actions";
 
 export function LoginForm({ next }: { next: string }) {
   const [state, formAction, pending] = useActionState<LoginState, FormData>(login, undefined);
 
   return (
-    <form action={formAction} className="flex flex-col gap-4">
+    <Box component="form" action={formAction} sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
       <input type="hidden" name="next" value={next} />
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="email">Email</label>
-        <input
-          id="email"
-          name="email"
-          type="email"
-          autoComplete="email"
-          className="rounded border border-black/20 px-3 py-2 dark:border-white/20"
-        />
-        {state?.errors?.email && (
-          <p className="text-sm text-red-600">{state.errors.email[0]}</p>
-        )}
-      </div>
+      <TextField
+        id="email"
+        name="email"
+        type="email"
+        label="Email"
+        autoComplete="email"
+        fullWidth
+        error={Boolean(state?.errors?.email)}
+        helperText={state?.errors?.email?.[0]}
+      />
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="password">Password</label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          className="rounded border border-black/20 px-3 py-2 dark:border-white/20"
-        />
-        {state?.errors?.password && (
-          <p className="text-sm text-red-600">{state.errors.password[0]}</p>
-        )}
-      </div>
+      <TextField
+        id="password"
+        name="password"
+        type="password"
+        label="Password"
+        autoComplete="current-password"
+        fullWidth
+        error={Boolean(state?.errors?.password)}
+        helperText={state?.errors?.password?.[0]}
+      />
 
-      {state?.formError && <p className="text-sm text-red-600">{state.formError}</p>}
+      {state?.formError && <Alert severity="error">{state.formError}</Alert>}
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="rounded bg-black px-4 py-2 text-white disabled:opacity-50 dark:bg-white dark:text-black"
-      >
+      <Button type="submit" variant="contained" disabled={pending} sx={{ height: 48 }}>
         {pending ? "Logging in…" : "Log in"}
-      </button>
-    </form>
+      </Button>
+    </Box>
   );
 }

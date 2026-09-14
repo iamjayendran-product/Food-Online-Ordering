@@ -1,6 +1,12 @@
 "use client";
 
 import { createContext, useContext, useEffect, useReducer, useState } from "react";
+import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
 import {
   basketReducer,
   parseStoredBasket,
@@ -94,37 +100,35 @@ export function BasketProvider({ children }: { children: React.ReactNode }) {
       }}
     >
       {children}
-      {pendingItem && (
-        <div
-          role="alertdialog"
-          aria-label="Start a new basket?"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-        >
-          <div className="w-full max-w-sm rounded-lg bg-white p-4 dark:bg-zinc-900">
-            <p className="font-medium">Start a new basket?</p>
-            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-              Your basket has items from {basket.restaurantName}. Adding from{" "}
-              {pendingItem.restaurantName} will clear it and start a new basket.
-            </p>
-            <div className="mt-4 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={cancelSwitch}
-                className="rounded px-3 py-1.5 text-sm"
-              >
+      <Dialog
+        open={Boolean(pendingItem)}
+        onClose={cancelSwitch}
+        role="alertdialog"
+        aria-label="Start a new basket?"
+        slotProps={{ paper: { sx: { borderRadius: 3, maxWidth: 420 } } }}
+      >
+        {/* Guarded: the dialog keeps rendering through its closing transition,
+            after pendingItem has already been cleared. */}
+        {pendingItem && (
+          <>
+            <DialogTitle sx={{ fontWeight: 700 }}>Start a new basket?</DialogTitle>
+            <DialogContent>
+              <DialogContentText variant="body2">
+                Your basket has items from {basket.restaurantName}. Adding from{" "}
+                {pendingItem.restaurantName} will clear it and start a new basket.
+              </DialogContentText>
+            </DialogContent>
+            <DialogActions sx={{ px: 3, pb: 2.5 }}>
+              <Button onClick={cancelSwitch} color="inherit">
                 Cancel
-              </button>
-              <button
-                type="button"
-                onClick={confirmSwitch}
-                className="rounded bg-black px-3 py-1.5 text-sm text-white dark:bg-white dark:text-black"
-              >
+              </Button>
+              <Button onClick={confirmSwitch} variant="contained">
                 Confirm
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+              </Button>
+            </DialogActions>
+          </>
+        )}
+      </Dialog>
     </BasketContext.Provider>
   );
 }

@@ -258,3 +258,40 @@ Reviewer: `PASS` on the first round for both F5 and F6 — no additional defects
 | 2026-09-11 | F4 built and reviewed (PASS, round 1). |
 | 2026-09-11 | F4 signed off and committed (commit bc9fc80). F5 (checkout) started. |
 | 2026-09-11 | F5+F6 built together (TC-5.5 depends on F6's order-placement mechanism). Fixed a pre-existing test-harness DB-isolation gap and several real races (basket hydration, proxy vs. Server Actions, double-submit). Reviewer PASS, round 1, both features. |
+
+---
+
+## UI redesign: Material UI, white & bronze (2026-09-14)
+
+Not a PRD feature — a restyle of the existing F1–F6 surfaces, requested by the owner: "UberEats type of user experience with Material UI framework… White & Bronze as the brand colours for primary and secondary."
+
+**Stack change**
+- Added `@mui/material` 9.4.0, `@mui/icons-material`, `@mui/material-nextjs` (v16 App Router entry), `@emotion/react` / `styled` / `cache`.
+- **Removed Tailwind** (`tailwindcss`, `@tailwindcss/postcss`, `postcss.config.mjs`). Running it alongside MUI would mean two CSS resets and competing layer order. `globals.css` is now base document rules only.
+- New: `src/theme.ts` (palette, typography, component defaults), `src/components/theme-registry.tsx` (client `ThemeProvider` + `CssBaseline`), `src/components/next-link-mui.tsx`.
+
+**Brand colours**
+- White is the canvas (`background.default`, `background.paper`, the AppBar); bronze carries every interactive element.
+- Interactive bronze is **#8C5A22 (5.83:1 on white)**. The classic brand bronze **#CD7F32 measures only 3.14:1**, failing WCAG AA for text and button fills, so it is used for gradients, borders and large accents.
+- MUI `primary` = bronze, `secondary` = white. White as `primary` was not viable: MUI paints buttons, links and focus rings from `primary`, which would render white on white.
+
+**UberEats-style surfaces**
+Sticky white AppBar; bronze gradient hero with a pill search field; image-first restaurant cards that lift on hover; sticky category chips on the menu; sticky order-summary cards on basket and checkout; a success hero on the confirmation page.
+
+**What constrained the markup**
+The 64 Playwright tests pin the accessibility contract, so the rewrite had to preserve: menu/basket rows as `<li>`; totals as single strings (`Subtotal: ₹220`); the basket link named exactly `Basket` / `Basket (1)`; `role="img"` veg markers and image placeholder; the `alertdialog` named "Start a new basket?" (MUI `Dialog` accepts `role="alertdialog"`); no `<img>` for the no-image placeholder; and no sign-up or forgot-password links on login (TC-1.12).
+
+**Real bug found and fixed during the redesign**
+`component={NextLink}` and `sx` theme callbacks inside Server Components pass *functions* across the RSC boundary, which React rejects outright ("Functions cannot be passed directly to Client Components"). It 500'd the customer layout, so every page that renders `SiteHeader` failed and all 41 browser tests died against a broken page. Fixed with client-side pre-bound Link wrappers (`next-link-mui.tsx`) and literal `sx` values.
+
+**Environment note:** a stale `next dev` server from an earlier session held the single-instance lock, so Playwright's own dev server exited right after binding the port. Playwright's `webServer` readiness uses `port`, which passes the moment the port opens — hence a run where every browser test failed on a dead server. Kill stray `next dev` processes before running the suite.
+
+**Pre-existing issue, left alone:** `prisma/seed.ts` gives Thyagaraya Filter Kaapi an Unsplash URL that now returns HTTP 404, so that card shows a broken image. `imageUrl: null` would fall back to the bronze initials tile. Untouched because it is seed data, predates this work, and is the owner's call.
+
+**Verification:** `tsc` clean · `eslint` clean · `next build` clean · **64/64 Playwright tests pass** · home, menu, basket and checkout visually checked at 1280×860.
+
+| 2026-09-14 | UI rebuilt on Material UI (white & bronze, UberEats-style); Tailwind removed; 64/64 tests still pass. |
+
+**Independent review (2026-09-14)**
+- **Round 1 — FIXED.** The reviewer caught a heading-hierarchy regression: `Typography variant="h3"` renders an `<h3>`, so basket, checkout and order confirmation jumped h1 → h3 where the Tailwind baseline had `<h2>`. No Appendix B case pins heading *level* on those pages, so the suite stayed green — precisely the gap an independent review exists to catch. Fixed with `component="h2"` in four places across three files, keeping `variant="h3"` so the visual size is unchanged.
+- **Round 2 — PASS** from a fresh reviewer with no knowledge of round 1: no defects found, and `lint`, `tsc`, `tc:check`, `build` and 64/64 tests all clean.
