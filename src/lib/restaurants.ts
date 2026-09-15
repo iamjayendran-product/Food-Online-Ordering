@@ -5,7 +5,14 @@ export type RestaurantCard = {
   slug: string;
   name: string;
   cuisines: string[];
-  imageUrl: string | null;
+  images: string[];
+  pickupMinutes: number;
+  ratingAvg: number;
+  reviewCount: number;
+  // Derived from the menu rather than stored: a restaurant counts as
+  // vegetarian when every one of its items is. Keeping it computed means it
+  // can never drift out of step with the dishes actually on sale.
+  isPureVeg: boolean;
 };
 
 // Prisma's `contains` compiles to a Postgres ILIKE pattern, so a literal "%"
@@ -18,11 +25,26 @@ function escapeLikePattern(value: string): string {
 export async function listRestaurants(query?: string): Promise<RestaurantCard[]> {
   const trimmed = query?.trim();
 
-  return db.restaurant.findMany({
+  const rows = await db.restaurant.findMany({
     where: trimmed ? { name: { contains: escapeLikePattern(trimmed), mode: "insensitive" } } : undefined,
     orderBy: { name: "asc" },
-    select: { id: true, slug: true, name: true, cuisines: true, imageUrl: true },
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      cuisines: true,
+      images: true,
+      pickupMinutes: true,
+      ratingAvg: true,
+      reviewCount: true,
+      items: { select: { isVeg: true } },
+    },
   });
+
+  return rows.map(({ items, ...restaurant }) => ({
+    ...restaurant,
+    isPureVeg: items.length > 0 && items.every((item) => item.isVeg),
+  }));
 }
 
 export type MenuItemDTO = {
@@ -32,6 +54,8 @@ export type MenuItemDTO = {
   pricePaise: number;
   isVeg: boolean;
   isAvailable: boolean;
+  imageUrl: string | null;
+  isRecommended: boolean;
 };
 
 export type MenuCategoryDTO = {
@@ -46,8 +70,17 @@ export type RestaurantMenu = {
   name: string;
   cuisines: string[];
   address: string;
+  images: string[];
+  pickupMinutes: number;
+  ratingAvg: number;
+  reviewCount: number;
   categories: MenuCategoryDTO[];
+  // The same items also appear in their own category further down the page;
+  // this is a shortcut to the kitchen's picks, not a separate menu.
+  recommended: MenuItemDTO[];
 };
+
+const MAX_RECOMMENDED = 4;
 
 export async function getRestaurantMenu(slug: string): Promise<RestaurantMenu | null> {
   const restaurant = await db.restaurant.findUnique({
@@ -58,6 +91,10 @@ export async function getRestaurantMenu(slug: string): Promise<RestaurantMenu | 
       name: true,
       cuisines: true,
       address: true,
+      images: true,
+      pickupMinutes: true,
+      ratingAvg: true,
+      reviewCount: true,
       categories: {
         orderBy: { sortOrder: "asc" },
         select: {
@@ -72,6 +109,8 @@ export async function getRestaurantMenu(slug: string): Promise<RestaurantMenu | 
               pricePaise: true,
               isVeg: true,
               isAvailable: true,
+              imageUrl: true,
+              isRecommended: true,
             },
           },
         },
@@ -81,8 +120,13 @@ export async function getRestaurantMenu(slug: string): Promise<RestaurantMenu | 
 
   if (!restaurant) return null;
 
-  return {
-    ...restaurant,
-    categories: restaurant.categories.filter((category) => category.items.length > 0),
-  };
+  const categories = restaurant.categories.filter((category) => category.items.length > 0);
+
+  // Only offer something the customer can actually order.
+  const recommended = categories
+    .flatMap((category) => category.items)
+    .filter((item) => item.isRecommended && item.isAvailable)
+    .slice(0, MAX_RECOMMENDED);
+
+  return { ...restaurant, categories, recommended };
 }

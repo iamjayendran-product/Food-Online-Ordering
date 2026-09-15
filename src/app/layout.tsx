@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "T Nagar Food",
+  title: "FoodStation",
   description: "Order pickup from T Nagar restaurants.",
 };
 

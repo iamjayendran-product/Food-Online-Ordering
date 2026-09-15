@@ -3,7 +3,7 @@ import { BASKET_STORAGE_KEY } from "../support/basket";
 
 test("TC-4.1 a guest adding an item updates the header count and the basket", async ({ page }) => {
   await page.goto("/restaurants/ranganathan-street-biryani");
-  await page.locator("li", { hasText: "Chicken Biryani" }).getByRole("button", { name: "Add" }).click();
+  await page.locator("#menu-categories li", { hasText: "Chicken Biryani" }).getByRole("button", { name: "Add" }).click();
 
   await expect(page.getByRole("link", { name: "Basket (1)" })).toBeVisible();
 
@@ -15,10 +15,10 @@ test("TC-4.1 a guest adding an item updates the header count and the basket", as
 
 test("TC-4.6 adding from a different restaurant and choosing Cancel leaves the basket unchanged", async ({ page }) => {
   await page.goto("/restaurants/ranganathan-street-biryani");
-  await page.locator("li", { hasText: "Chicken Biryani" }).getByRole("button", { name: "Add" }).click();
+  await page.locator("#menu-categories li", { hasText: "Chicken Biryani" }).getByRole("button", { name: "Add" }).click();
 
   await page.goto("/restaurants/pondy-bazaar-tiffin-house");
-  await page.locator("li", { hasText: "Masala Dosa" }).getByRole("button", { name: "Add" }).click();
+  await page.locator("#menu-categories li", { hasText: "Masala Dosa" }).getByRole("button", { name: "Add" }).click();
 
   await expect(page.getByRole("alertdialog", { name: "Start a new basket?" })).toBeVisible();
   await page.getByRole("button", { name: "Cancel" }).click();
@@ -30,10 +30,10 @@ test("TC-4.6 adding from a different restaurant and choosing Cancel leaves the b
 
 test("TC-4.7 adding from a different restaurant and choosing Confirm replaces the basket", async ({ page }) => {
   await page.goto("/restaurants/ranganathan-street-biryani");
-  await page.locator("li", { hasText: "Chicken Biryani" }).getByRole("button", { name: "Add" }).click();
+  await page.locator("#menu-categories li", { hasText: "Chicken Biryani" }).getByRole("button", { name: "Add" }).click();
 
   await page.goto("/restaurants/pondy-bazaar-tiffin-house");
-  await page.locator("li", { hasText: "Masala Dosa" }).getByRole("button", { name: "Add" }).click();
+  await page.locator("#menu-categories li", { hasText: "Masala Dosa" }).getByRole("button", { name: "Add" }).click();
 
   await expect(page.getByRole("alertdialog", { name: "Start a new basket?" })).toBeVisible();
   await page.getByRole("button", { name: "Confirm" }).click();
@@ -45,7 +45,7 @@ test("TC-4.7 adding from a different restaurant and choosing Confirm replaces th
 
 test("TC-4.8 the basket persists across a reload and navigating away and back", async ({ page }) => {
   await page.goto("/restaurants/ranganathan-street-biryani");
-  await page.locator("li", { hasText: "Chicken Biryani" }).getByRole("button", { name: "Add" }).click();
+  await page.locator("#menu-categories li", { hasText: "Chicken Biryani" }).getByRole("button", { name: "Add" }).click();
   await expect(page.getByRole("link", { name: "Basket (1)" })).toBeVisible();
 
   await page.reload();

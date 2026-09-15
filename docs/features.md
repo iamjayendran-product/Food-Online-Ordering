@@ -20,8 +20,9 @@ This is the single place to see what's being built, in what order, and where eac
 | F4 | Basket | P0-4 | F3 | TC-4.1–4.12 (12) | **Done** | PASS (round 1/1) | 2026-09-11 |
 | F5 | Checkout | P0-5 | F1, F4 | TC-5.1–5.5 (5) | **Done** | PASS (round 1/1, reviewed with F6) | 2026-09-11 |
 | F6 | Place order and confirmation | P0-6 | F5 | TC-6.1–6.16 (16) + TC-J.1 | **Done** | PASS (round 1/1, reviewed with F5) | 2026-09-11 |
+| F7 | Discovery and menu experience | P0-7 | F2, F3 | TC-7.1–7.9 (9) | **Done** | PASS (round 2/2) | 2026-09-15 |
 
-**Build order:** F0 → F1 → F2 → F3 → F4 → F5 → F6, one feature per cycle.
+**Build order:** F0 → F1 → F2 → F3 → F4 → F5 → F6, one feature per cycle. F7 and the Material UI redesign followed as owner-requested work after v1 shipped.
 
 ## Supporting work
 
@@ -258,6 +259,10 @@ Reviewer: `PASS` on the first round for both F5 and F6 — no additional defects
 | 2026-09-11 | F4 built and reviewed (PASS, round 1). |
 | 2026-09-11 | F4 signed off and committed (commit bc9fc80). F5 (checkout) started. |
 | 2026-09-11 | F5+F6 built together (TC-5.5 depends on F6's order-placement mechanism). Fixed a pre-existing test-harness DB-isolation gap and several real races (basket hydration, proxy vs. Server Actions, double-submit). Reviewer PASS, round 1, both features. |
+| 2026-09-11 | F6 signed off and committed (commit c7951f0). v1 customer journey (F0-F6) complete — README and CLAUDE.md updated. No feature queued. |
+| 2026-09-14 | UI rebuilt on Material UI (white & bronze, UberEats-style); Tailwind removed. Reviewer round 1 FIXED (heading-hierarchy regression, h1→h3 skip), round 2 PASS. Committed (commit f6709a8). |
+| 2026-09-14 | F7 (discovery and menu experience) built: FoodStation rename, store photo carousels, ratings, pickup times, veg markers, favourites, item photos, Recommended section. Not yet reviewed or committed at session end. |
+| 2026-09-15 | F7 reviewed: round 1 FIXED an SSR/hydration mismatch (`Chip icon` prop) that was intermittently corrupting an unrelated test (TC-2.5) via a forced remount, plus a test-coverage gap in TC-7.8 ("only available dishes are recommended" was untested). Round 2 PASS. Tracker brought up to date and committed. |
 
 ---
 
@@ -290,8 +295,45 @@ The 64 Playwright tests pin the accessibility contract, so the rewrite had to pr
 
 **Verification:** `tsc` clean · `eslint` clean · `next build` clean · **64/64 Playwright tests pass** · home, menu, basket and checkout visually checked at 1280×860.
 
-| 2026-09-14 | UI rebuilt on Material UI (white & bronze, UberEats-style); Tailwind removed; 64/64 tests still pass. |
-
 **Independent review (2026-09-14)**
 - **Round 1 — FIXED.** The reviewer caught a heading-hierarchy regression: `Typography variant="h3"` renders an `<h3>`, so basket, checkout and order confirmation jumped h1 → h3 where the Tailwind baseline had `<h2>`. No Appendix B case pins heading *level* on those pages, so the suite stayed green — precisely the gap an independent review exists to catch. Fixed with `component="h2"` in four places across three files, keeping `variant="h3"` so the visual size is unchanged.
 - **Round 2 — PASS** from a fresh reviewer with no knowledge of round 1: no defects found, and `lint`, `tsc`, `tc:check`, `build` and 64/64 tests all clean.
+
+---
+
+## F7: Discovery and menu experience (2026-09-14)
+
+Owner request: rename the app to **FoodStation**, add a photo carousel per store, dynamic pickup times, star ratings with review counts, vegetarian/non-vegetarian markers on discovery, a favourites control, menu item photos, and a Recommended section. Requirements are PRD **P0-7**; test cases are Appendix B **TC-7.1–TC-7.9**.
+
+**Decisions taken with the owner**
+- Carousel = photos **inside each store card**, not a hero banner.
+- Ratings = **seeded aggregates** (`ratingAvg`, `reviewCount`), not a Review model with comment text.
+- Favourites = **per user in the database**, so they follow the customer across devices and require login.
+- Recommended = **a real section**, accepting that dishes appear twice and that existing tests needed rescoping.
+
+**Schema**
+- `Restaurant`: `imageUrl` replaced by `images String[]`; added `pickupMinutes`, `ratingAvg`, `reviewCount`.
+- `MenuItem`: added `isRecommended`; its long-existing `imageUrl` is now actually populated.
+- New `Favorite` model, unique on `(userId, restaurantId)`.
+- Migration `20260914120000_ux_enhancements`.
+
+**Vegetarian status is derived, not stored.** A restaurant counts as vegetarian when every one of its items is, so the badge cannot drift away from the dishes actually on sale.
+
+**Imagery.** Every URL in the seed was checked for HTTP 200 before use, and photos are assigned by keyword rather than hand-mapped per dish, so a new item can't silently end up without one. This also replaced the dead Thyagaraya Filter Kaapi URL reported earlier. Burkit Road Bakes is deliberately left photo-less to keep TC-2.7 meaningful: a store with no photos must render the initials tile and no `<img>` at all.
+
+**Markup constraints that shaped the components**
+- The favourite control sits **outside** the card's link (it is its own action and must not navigate), while the carousel stays **inside** it, because TC-2.7 scopes to the link and expects the placeholder there. Carousel arrows are therefore `span[role="button"]` that cancel the click — a `<button>` inside an `<a>` is invalid markup.
+- Recommended duplicates dishes, so the full menu is wrapped in `#menu-categories` and 12 menu-page locators across 5 spec files were scoped to it. TC-3.1 now expects four level-2 headings, Recommended first.
+
+**Bug found while verifying:** scoping the `locator("li", …)` calls wasn't enough — `TC-3.2` also used a plain `getByText("Chicken Biryani")`, which began matching two elements once the dish appeared in both Recommended and its category. Its price assertion (`₹220`) would have failed for the same reason. Both fixed by scoping that test to `#menu-categories`.
+
+**Verification (2026-09-14, at implementation time):** `tc:check` 69 cases · `tsc` clean · `eslint` clean · full Playwright suite · `next build`.
+
+**Independent review (2026-09-15)**
+- **Round 1 — FIXED**, two real defects:
+  1. **SSR/hydration mismatch.** Both `restaurant-card.tsx` and the restaurant menu page passed a `<ScheduleIcon>` element into MUI `<Chip icon={...}>`. Confirmed by direct SSR HTML inspection that the icon never rendered server-side under `next dev` (a `next build && next start` pass was fine — the bug was dev-mode-specific, which matters because Playwright runs against `next dev`). This wasn't cosmetic: the hydration-triggered remount reset an unrelated uncontrolled `TextField`, making **TC-2.5 fail intermittently** (2 of 3 repeats) even though nothing in TC-2.5's own code had changed. Reproduced reliably with `--repeat-each=3`. Fixed by moving the icon out of `Chip`'s `icon` prop (which MUI clones via `React.cloneElement`) and into `label` as a sibling `Box`, in both files.
+  2. **TC-7.8 didn't test its own claim.** The Expected column requires "only available dishes are recommended," and the implementation's filter (`isRecommended && isAvailable`) was already correct — but no seeded item was ever both recommended and unavailable, so the test would have passed even if that filter condition were deleted. Fixed by marking Gobi Manchurian (already `isAvailable: false`) as `isRecommended: true` and asserting it stays out of the Recommended rail.
+  - Also strengthened TC-7.6 to check the `Favorite` row count directly (was: redirect only).
+- **Round 2 — PASS** from a fresh reviewer: no defects found, `lint`/`tsc`/`tc:check`/`build`/73 tests all clean, no hydration errors in the webserver log.
+
+This is the same hydration bug the owner independently reproduced and reported live during round 1's review — confirmed identical stack trace and fix.

@@ -4,7 +4,7 @@ import { testDb } from "../support/db";
 
 async function addChickenBiryaniToBasket(page: import("@playwright/test").Page) {
   await page.goto("/restaurants/ranganathan-street-biryani");
-  await page.locator("li", { hasText: "Chicken Biryani" }).getByRole("button", { name: "Add" }).click();
+  await page.locator("#menu-categories li", { hasText: "Chicken Biryani" }).getByRole("button", { name: "Add" }).click();
 }
 
 test("TC-5.1 a guest is sent to log in and returns to checkout with the basket intact", async ({ page }) => {

@@ -5,7 +5,7 @@ import { BASKET_STORAGE_KEY } from "../support/basket";
 
 async function addChickenBiryaniToBasket(page: import("@playwright/test").Page) {
   await page.goto("/restaurants/ranganathan-street-biryani");
-  await page.locator("li", { hasText: "Chicken Biryani" }).getByRole("button", { name: "Add" }).click();
+  await page.locator("#menu-categories li", { hasText: "Chicken Biryani" }).getByRole("button", { name: "Add" }).click();
 }
 
 test("TC-6.4 an item that becomes unavailable after being added is flagged and blocks payment until removed", async ({ page }) => {

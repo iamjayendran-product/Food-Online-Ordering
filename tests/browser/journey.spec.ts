@@ -6,8 +6,8 @@ test("TC-J.1 guest journey: search, menu, basket, checkout, login, pay", async (
   await page.getByRole("button", { name: "Search" }).click();
   await page.getByRole("link", { name: /Pondy Bazaar Tiffin House/ }).click();
 
-  await page.locator("li", { hasText: "Idli" }).getByRole("button", { name: "Add" }).click();
-  const dosaRow = page.locator("li", { hasText: "Masala Dosa" });
+  await page.locator("#menu-categories li", { hasText: "Idli" }).getByRole("button", { name: "Add" }).click();
+  const dosaRow = page.locator("#menu-categories li", { hasText: "Masala Dosa" });
   await dosaRow.getByRole("button", { name: "Add" }).click();
   await dosaRow.getByRole("button", { name: "Add" }).click();
 

@@ -11,27 +11,12 @@ function initials(name: string) {
     .join("");
 }
 
-export function RestaurantImage({ name, imageUrl }: { name: string; imageUrl: string | null }) {
-  if (imageUrl) {
-    return (
-      <Box
-        component="img"
-        src={imageUrl}
-        alt=""
-        className="restaurant-card__media"
-        sx={{
-          display: "block",
-          height: MEDIA_HEIGHT,
-          width: "100%",
-          objectFit: "cover",
-          transition: "transform 240ms ease",
-        }}
-      />
-    );
-  }
-
-  // Deliberately not an <img>: a restaurant without a photo must render no
-  // image element at all, only this labelled stand-in.
+/**
+ * Stand-in for a restaurant with no photos. Deliberately not an <img>: a
+ * photo-less restaurant must render no image element at all, only this
+ * labelled tile.
+ */
+export function RestaurantImage({ name }: { name: string }) {
   return (
     <Box
       role="img"

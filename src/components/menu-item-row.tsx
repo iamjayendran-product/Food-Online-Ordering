@@ -55,15 +55,31 @@ export function MenuItemRow({
         </Box>
       </Box>
 
-      <AddToBasketButton
-        isAvailable={item.isAvailable}
-        restaurantSlug={restaurantSlug}
-        restaurantName={restaurantName}
-        restaurantAddress={restaurantAddress}
-        itemId={item.id}
-        name={item.name}
-        unitPricePaise={item.pricePaise}
-      />
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexShrink: 0 }}>
+        {item.imageUrl && (
+          <Box
+            component="img"
+            src={item.imageUrl}
+            alt=""
+            sx={{
+              display: { xs: "none", sm: "block" },
+              height: 72,
+              width: 96,
+              borderRadius: 2,
+              objectFit: "cover",
+            }}
+          />
+        )}
+        <AddToBasketButton
+          isAvailable={item.isAvailable}
+          restaurantSlug={restaurantSlug}
+          restaurantName={restaurantName}
+          restaurantAddress={restaurantAddress}
+          itemId={item.id}
+          name={item.name}
+          unitPricePaise={item.pricePaise}
+        />
+      </Box>
     </Box>
   );
 }

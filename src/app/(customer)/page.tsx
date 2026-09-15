@@ -5,6 +5,8 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import SearchIcon from "@mui/icons-material/Search";
 import { listRestaurants } from "@/lib/restaurants";
+import { listFavoriteRestaurantIds } from "@/lib/favorites";
+import { getCurrentUser } from "@/lib/dal";
 import { RestaurantCard } from "@/components/restaurant-card";
 import { TextLink } from "@/components/next-link-mui";
 
@@ -14,7 +16,9 @@ export default async function HomePage({
   searchParams: Promise<{ q?: string }>;
 }) {
   const { q } = await searchParams;
-  const restaurants = await listRestaurants(q);
+  const [restaurants, user] = await Promise.all([listRestaurants(q), getCurrentUser()]);
+  const favoriteIds = user ? await listFavoriteRestaurantIds(user.id) : [];
+  const favorites = new Set(favoriteIds);
 
   return (
     <Box>
@@ -99,7 +103,11 @@ export default async function HomePage({
             }}
           >
             {restaurants.map((restaurant) => (
-              <RestaurantCard key={restaurant.id} restaurant={restaurant} />
+              <RestaurantCard
+                key={restaurant.id}
+                restaurant={restaurant}
+                isFavorite={favorites.has(restaurant.id)}
+              />
             ))}
           </Box>
         </>

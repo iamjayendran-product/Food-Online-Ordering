@@ -17,20 +17,29 @@ model User {
   name         String
   createdAt    DateTime @default(now())
 
-  orders Order[]
+  orders    Order[]
+  favorites Favorite[]
 }
 
 model Restaurant {
-  id       String   @id @default(cuid())
-  slug     String   @unique
-  name     String
+  id      String   @id @default(cuid())
+  slug    String   @unique
+  name    String
   cuisines String[]
-  address  String
-  imageUrl String?
+  address String
+  // Several photos per restaurant, shown as a carousel on the discovery card.
+  // An empty array means the card falls back to its initials tile and renders
+  // no <img> at all.
+  images   String[]
+  // Advertised pickup wait, in minutes.
+  pickupMinutes Int   @default(15)
+  ratingAvg     Float @default(4.5)
+  reviewCount   Int   @default(0)
 
   categories MenuCategory[]
   items      MenuItem[]
   orders     Order[]
+  favorites  Favorite[]
 }
 
 model MenuCategory {
@@ -46,16 +55,17 @@ model MenuCategory {
 }
 
 model MenuItem {
-  id           String  @id @default(cuid())
-  restaurantId String
-  categoryId   String
-  name         String
-  description  String?
-  pricePaise   Int
-  isVeg        Boolean
-  isAvailable  Boolean @default(true)
-  imageUrl     String?
-  sortOrder    Int
+  id            String  @id @default(cuid())
+  restaurantId  String
+  categoryId    String
+  name          String
+  description   String?
+  pricePaise    Int
+  isVeg         Boolean
+  isAvailable   Boolean @default(true)
+  imageUrl      String?
+  isRecommended Boolean @default(false)
+  sortOrder     Int
 
   restaurant Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   category   MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
@@ -63,6 +73,19 @@ model MenuItem {
 
   @@unique([categoryId, name])
   @@index([restaurantId])
+}
+
+model Favorite {
+  id           String   @id @default(cuid())
+  userId       String
+  restaurantId String
+  createdAt    DateTime @default(now())
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, restaurantId])
+  @@index([userId])
 }
 
 enum OrderStatus {

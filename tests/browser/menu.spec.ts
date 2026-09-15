@@ -10,22 +10,25 @@ test("TC-3.1 selecting a restaurant shows its name, cuisines, address and catego
   await expect(page.getByText("45 Ranganathan Street, T Nagar, Chennai")).toBeVisible();
 
   const categoryHeadings = page.getByRole("heading", { level: 2 });
-  await expect(categoryHeadings).toHaveText(["Biryani", "Starters", "Beverages"]);
+  await expect(categoryHeadings).toHaveText(["Recommended", "Biryani", "Starters", "Beverages"]);
 });
 
 test("TC-3.2 a menu item shows name, description, price and an accessible veg/non-veg marker", async ({ page }) => {
   await page.goto("/restaurants/ranganathan-street-biryani");
 
-  await expect(page.getByText("Chicken Biryani")).toBeVisible();
-  await expect(page.getByText("Slow-cooked basmati with spiced chicken.")).toBeVisible();
-  await expect(page.getByText("₹220")).toBeVisible();
-  await expect(page.getByRole("img", { name: "Non-vegetarian" }).first()).toBeVisible();
+  // Scoped to the full menu: a recommended dish also appears in the shortcut
+  // section above, so an unscoped match would hit two elements.
+  const menu = page.locator("#menu-categories");
+  await expect(menu.getByText("Chicken Biryani")).toBeVisible();
+  await expect(menu.getByText("Slow-cooked basmati with spiced chicken.")).toBeVisible();
+  await expect(menu.getByText("₹220")).toBeVisible();
+  await expect(menu.getByRole("img", { name: "Non-vegetarian" }).first()).toBeVisible();
 });
 
 test("TC-3.3 an unavailable item is marked unavailable and its Add button is disabled", async ({ page }) => {
   await page.goto("/restaurants/ranganathan-street-biryani");
 
-  const row = page.locator("li", { hasText: "Gobi Manchurian" });
+  const row = page.locator("#menu-categories li", { hasText: "Gobi Manchurian" });
   await expect(row.getByText("Currently unavailable")).toBeVisible();
   await expect(row.getByRole("button", { name: "Add" })).toBeDisabled();
 });
@@ -42,7 +45,7 @@ test("TC-3.6 the menu is visible and Add works while logged out", async ({ page 
   await page.goto("/restaurants/ranganathan-street-biryani");
   await expect(page.getByRole("link", { name: "Login" })).toBeVisible();
 
-  const row = page.locator("li", { hasText: "Chicken Biryani" });
+  const row = page.locator("#menu-categories li", { hasText: "Chicken Biryani" });
   const addButton = row.getByRole("button", { name: "Add" });
   await expect(addButton).toBeEnabled();
   await addButton.click();

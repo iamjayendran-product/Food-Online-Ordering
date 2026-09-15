@@ -27,9 +27,9 @@ export async function SiteHeader() {
               textDecoration: "none",
             }}
           >
-            T Nagar{" "}
+            Food
             <Box component="span" sx={{ color: "primary.main" }}>
-              Food
+              Station
             </Box>
           </LinkTypography>
 

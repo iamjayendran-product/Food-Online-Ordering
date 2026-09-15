@@ -1,6 +1,6 @@
 @AGENTS.md
 
-# T Nagar Food Ordering
+# FoodStation
 
 ## Overview
 
@@ -50,11 +50,13 @@ src/
     api/                   # Empty. Mutations are Server Actions, not route handlers — see Tech stack.
   proxy.ts                 # Optimistic route protection (this Next.js version's renamed middleware)
   lib/                     # Server-side code: db.ts, session.ts, dal.ts, restaurants.ts, basket.ts,
-                            # pricing.ts, format.ts, auth/, orders/, payments/
-  components/              # Shared React components (BasketProvider, SiteHeader, menu/basket UI)
+                            # pricing.ts, format.ts, favorites.ts, auth/, orders/, payments/
+  components/              # Shared React components (BasketProvider, SiteHeader, menu/basket UI,
+                            # restaurant card carousel, rating stars, favourite button)
 prisma/
-  schema.prisma            # User, Restaurant, MenuCategory, MenuItem, Order, OrderItem
-  seed.ts                  # Idempotent seed: 6 T Nagar restaurants, 60 items, 2 demo customers
+  schema.prisma            # User, Restaurant, MenuCategory, MenuItem, Order, OrderItem, Favorite
+  seed.ts                  # Idempotent seed: 6 T Nagar restaurants (ratings, pickup times, photo
+                            # carousels), 60 items with photos, 18 recommended, 2 demo customers
 tests/
   browser/                 # Playwright specs that drive a page
   logic/                   # Playwright specs that call src/lib directly, no browser
@@ -71,7 +73,7 @@ docker-compose.yml          # Local Postgres
 
 The `(customer)`, `(restaurant-admin)`, and `(super-admin)` folders are [route groups](https://nextjs.org/docs/app/building-your-application/routing/route-groups) — they organize routes by role without affecting the URL, except where a named segment inside them (`admin`, `platform`) does add a path segment.
 
-**Current state: v1 customer journey complete (F0–F6).** Login, restaurant discovery/search, menus, basket, checkout, and simulated payment through to order confirmation all work end to end — see [docs/features.md](docs/features.md) for the full build log. The UI was rebuilt on Material UI (white and bronze, UberEats-style) on 2026-09-14. Restaurant-admin and platform-admin are still placeholder stubs. Features are added incrementally on request — do not build ahead of what's asked.
+**Current state: v1 customer journey complete (F0–F6).** Login, restaurant discovery/search, menus, basket, checkout, and simulated payment through to order confirmation all work end to end — see [docs/features.md](docs/features.md) for the full build log. The UI was rebuilt on Material UI (white and bronze, UberEats-style) on 2026-09-14, and F7 added the discovery and menu experience: per-store photo carousels, star ratings with review counts, pickup times, vegetarian markers, per-user favourites, menu item photos and a Recommended section. **Recommended repeats dishes that also appear in their category, so anything locating a menu item must scope to `#menu-categories`.** Restaurant-admin and platform-admin are still placeholder stubs. Features are added incrementally on request — do not build ahead of what's asked.
 
 ## Local development
 

@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Product** | T Nagar Food Ordering (multi-restaurant marketplace, T Nagar, Chennai) |
+| **Product** | FoodStation (multi-restaurant pickup marketplace, T Nagar, Chennai) |
 | **Scope** | Customer journey: log in → discover → menu → basket → checkout → order confirmation |
 | **Status** | Approved (2026-09-11). Build progress: [features.md](../features.md) |
 | **Owner** | Jay |
@@ -158,6 +158,20 @@ Selecting a restaurant loads its menu.
 
 *Technical considerations:* the server is authoritative on price, availability and totals. Payment is behind a provider interface so a real gateway can replace the simulation. The charge happens outside the database transaction. *Dependencies:* P0-5.
 
+#### P0-7: Discovery and menu experience (F7)
+Presentation over the existing order flow. Nothing here changes pricing, availability or checkout.
+
+- Each store card shows a **photo carousel**. **Given** a restaurant with several photos, **when** the customer uses the next or previous control, **then** the photo changes and the customer stays on the discovery page. A restaurant with no photos shows a labelled initials tile and no image element at all. [TC-7.4, TC-2.7]
+- Each store card shows that restaurant's own **pickup time in minutes**. [TC-7.2]
+- Each store card shows a **star rating out of 5 with the number of reviews in brackets**, both per restaurant. [TC-7.1]
+- Each store card marks the kitchen **vegetarian or non-vegetarian**, using the same symbol as menu items. A restaurant counts as vegetarian only when every dish on its menu is. [TC-7.3]
+- Each store card carries a **favourite control**. **Given** a signed-in customer, **when** they favourite a restaurant, **then** it is still favourited after a reload, and only for that customer. A logged-out visitor is sent to log in instead. [TC-7.5, TC-7.6]
+- Every **menu item shows a photo**. [TC-7.7]
+- The menu opens with a **Recommended** section of the kitchen's picks, above the full menu. Recommended dishes also stay in their own category, so such a dish appears twice by design, and only available dishes are recommended. [TC-7.8]
+- The application is named **FoodStation**. [TC-7.9]
+
+*Technical considerations:* pickup time, rating and review count are stored per restaurant and seeded; vegetarian status is derived from the menu rather than stored, so it cannot drift from the dishes on sale. Favourites are per user in the database, so they follow the customer across devices. Because Recommended repeats items, the full menu sits inside a stable `#menu-categories` container that tests scope to.
+
 ### Nice-to-Have (P1)
 **None committed for v1.** The scope is deliberately tight. Anything proposed for v1 enters here only with a matching removal from P0 or an explicit timeline extension.
 
@@ -205,7 +219,7 @@ Targets are explicit hypotheses with no benchmark data behind them. Measuring th
 
 | Question | Owner | Blocking? |
 |---|---|---|
-| What is the app/brand name for the header and page titles? (Placeholder: "T Nagar Food Ordering") | Stakeholder | Non-blocking |
+| ~~What is the app/brand name for the header and page titles?~~ **Resolved 2026-09-14: FoodStation.** | Stakeholder | Closed |
 | Where would real restaurant and dish images come from, and under what licence? v1 uses placeholders. | Design | Non-blocking |
 | For a real launch, is a flat 5% GST on the subtotal correct, are menu prices GST-inclusive, and are packaging charges needed? | Legal / finance | Non-blocking (v1 assumes 5% on subtotal) |
 | Do residents need scheduled pickup before a real launch, or is ASAP enough? | Stakeholder / research | Non-blocking |
@@ -338,6 +352,19 @@ All test cases are automated with Playwright. **B** = browser test; **L** = logi
 | TC-6.14 | B | Another customer (Arjun) opens Priya's confirmation | Not found |
 | TC-6.15 | B | Logged-out visitor opens a confirmation URL | Asked to log in, then returned to the confirmation |
 | TC-6.16 | B | Open the URL of a payment-failed order | Not found |
+
+### TC-7: Discovery and menu experience (P0-7)
+| ID | Type | Scenario | Expected |
+|---|---|---|---|
+| TC-7.1 | B | Usman Road Mess card | Rating labelled "Rated 4.7 out of 5 from 741 reviews", showing 4.7 and (741) |
+| TC-7.2 | B | Pickup time on two different cards | Usman Road Mess shows 22 mins; Thyagaraya Filter Kaapi shows 6 mins |
+| TC-7.3 | B | Vegetarian and non-vegetarian kitchens | Usman Road Mess marked Vegetarian; Ranganathan Street Biryani marked Non-vegetarian |
+| TC-7.4 | B | Next and previous photo on a card carousel | Photo moves 1 → 2 and back; the page does not navigate away |
+| TC-7.5 | B | Signed-in customer favourites a store, then reloads | Control reads "Remove … from favourites" and still does after reload |
+| TC-7.6 | B | Logged-out visitor clicks favourite | Sent to the login page; nothing is favourited |
+| TC-7.7 | B | Menu items | Every row inside `#menu-categories` has exactly one photo |
+| TC-7.8 | B | Menu page opens | First level-2 heading is "Recommended"; a recommended dish appears twice, an unavailable dish once |
+| TC-7.9 | B | Branding | Page title and header wordmark both read FoodStation |
 
 ### TC-J: End-to-end journey (Goal 1)
 | ID | Type | Scenario | Expected |
