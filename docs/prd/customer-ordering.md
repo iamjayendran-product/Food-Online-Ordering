@@ -182,6 +182,15 @@ Presentation over the existing discovery flow. Nothing here changes search resul
 
 *Technical considerations:* the hero banner reuses `Restaurant.images` — the same photos already shown on the discovery card, not a separate field. Campaigns are seeded, decorative promotional text (a new `Campaign` model), not a real discounts/promotions system.
 
+#### P0-9: Pre-order (F12)
+Checkout can schedule pickup for later instead of ASAP.
+
+- **Given** the checkout page, **when** the customer picks "Schedule for later" and a valid date and time, **then** the order places for that pickup time and the confirmation page shows it. [TC-9.1]
+- A scheduled time must be in the future, within the next 7 days, and between 9am and 10pm — outside that window is rejected with no order created. [TC-9.2, TC-9.3]
+- Not scheduling (the default) still places the order for **ASAP** pickup, unchanged from before this feature. [TC-9.4]
+
+*Technical considerations:* `Order.scheduledFor` is nullable — null means ASAP, the only behavior that existed before this feature. The pickup window is evaluated in IST regardless of server timezone, since pickup happens in Chennai.
+
 ### Nice-to-Have (P1)
 **None committed for v1.** The scope is deliberately tight. Anything proposed for v1 enters here only with a matching removal from P0 or an explicit timeline extension.
 
@@ -385,6 +394,14 @@ All test cases are automated with Playwright. **B** = browser test; **L** = logi
 | TC-8.4 | B | Hovering the campaigns marquee | Its scroll animation pauses |
 | TC-8.5 | B | Opening a restaurant with photos | A hero banner above the name/rating/address block auto-advances |
 | TC-8.6 | B | Opening a restaurant with no photos | No hero banner element, no broken image |
+
+### TC-9: Pre-order (P0-9)
+| ID | Type | Scenario | Expected |
+|---|---|---|---|
+| TC-9.1 | B | Schedule a valid future pickup time, pay | Order placed; confirmation shows that pickup time |
+| TC-9.2 | L | `placeOrder` with a past `scheduledFor` | Rejected as `INVALID_SCHEDULE`; no order created |
+| TC-9.3 | L | `placeOrder` with a time outside 9am-10pm, or more than 7 days out | Rejected as `INVALID_SCHEDULE`; no order created |
+| TC-9.4 | B | Checkout without scheduling, pay | Confirmation shows "Pickup: ASAP" |
 
 ### TC-J: End-to-end journey (Goal 1)
 | ID | Type | Scenario | Expected |

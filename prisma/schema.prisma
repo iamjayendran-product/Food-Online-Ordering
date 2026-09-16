@@ -118,6 +118,8 @@ model Order {
   totalPaise      Int
   paymentProvider String
   paymentRef      String?
+  // null = ASAP pickup (the only behavior before pre-order scheduling existed).
+  scheduledFor    DateTime?
   createdAt       DateTime    @default(now())
 
   user       User        @relation(fields: [userId], references: [id])

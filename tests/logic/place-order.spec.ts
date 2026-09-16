@@ -205,3 +205,53 @@ test("TC-6.9 two successful orders get unique, increasing order numbers", async 
 
   expect(second.orderNumber).toBeGreaterThan(first.orderNumber);
 });
+
+test("TC-9.2 a past scheduledFor is rejected as an invalid schedule", async () => {
+  const user = await getPriya();
+  const { restaurant, chicken } = await getBiryaniItems();
+  const before = await testDb.order.count();
+
+  const result = await placeOrder(
+    user.id,
+    {
+      restaurantSlug: restaurant.slug,
+      items: [{ itemId: chicken.id, quantity: 1 }],
+      expectedTotalPaise: Math.round(chicken.pricePaise * 1.05),
+      simulateSuccess: true,
+      scheduledFor: new Date(Date.now() - 60_000).toISOString(),
+    },
+    mockPaymentProvider,
+  );
+
+  expect(result.status).toBe("INVALID_SCHEDULE");
+  expect(await testDb.order.count()).toBe(before);
+});
+
+test("TC-9.3 a scheduledFor outside the pickup window, or more than 7 days out, is rejected", async () => {
+  const user = await getPriya();
+  const { restaurant, chicken } = await getBiryaniItems();
+  const input = {
+    restaurantSlug: restaurant.slug,
+    items: [{ itemId: chicken.id, quantity: 1 }],
+    expectedTotalPaise: Math.round(chicken.pricePaise * 1.05),
+    simulateSuccess: true,
+  };
+
+  // 2 days out, but at 3am IST — well inside the 7-day window, outside the
+  // 9am-10pm one. The explicit +05:30 offset makes this unambiguous
+  // regardless of the machine running the test.
+  const twoDaysOut = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const outsideWindow = await placeOrder(
+    user.id,
+    { ...input, scheduledFor: `${twoDaysOut}T03:00:00+05:30` },
+    mockPaymentProvider,
+  );
+  expect(outsideWindow.status).toBe("INVALID_SCHEDULE");
+
+  const tooFarAhead = await placeOrder(
+    user.id,
+    { ...input, scheduledFor: new Date(Date.now() + 9 * 24 * 60 * 60 * 1000).toISOString() },
+    mockPaymentProvider,
+  );
+  expect(tooFarAhead.status).toBe("INVALID_SCHEDULE");
+});

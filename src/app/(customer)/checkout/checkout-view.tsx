@@ -12,6 +12,9 @@ import FormControlLabel from "@mui/material/FormControlLabel";
 import FormLabel from "@mui/material/FormLabel";
 import Radio from "@mui/material/Radio";
 import RadioGroup from "@mui/material/RadioGroup";
+import TextField from "@mui/material/TextField";
+import ToggleButton from "@mui/material/ToggleButton";
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Typography from "@mui/material/Typography";
 import PlaceOutlinedIcon from "@mui/icons-material/PlaceOutlined";
 import { useBasket } from "@/components/basket-provider";
@@ -19,10 +22,39 @@ import { calculateTotals } from "@/lib/pricing";
 import { formatInr } from "@/lib/format";
 import { placeOrderAction } from "./actions";
 
+const SCHEDULE_MAX_DAYS_AHEAD = 7;
+const SCHEDULE_WINDOW_START = "09:00";
+const SCHEDULE_WINDOW_END = "21:59";
+
+function toDateInputValue(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 export function CheckoutView() {
   const router = useRouter();
   const { basket, hydrated, remove, clear, refreshBasket } = useBasket();
   const [paymentChoice, setPaymentChoice] = useState<"success" | "failure">("success");
+  const [scheduleMode, setScheduleMode] = useState<"asap" | "schedule">("asap");
+  const [scheduleDate, setScheduleDate] = useState("");
+  const [scheduleTime, setScheduleTime] = useState("");
+  const [scheduleError, setScheduleError] = useState<string | null>(null);
+  // Computed after mount, not during render: `new Date()` is impure, and
+  // calling it at render time can differ between the server render and the
+  // client hydration pass — the same class of bug as the F7 Chip mismatch.
+  const [dateBounds, setDateBounds] = useState<{ min: string; max: string } | null>(null);
+  useEffect(() => {
+    const now = new Date();
+    // There is no pure way to derive "today" during render; this is the
+    // standard pattern for a client-only value that must not run during SSR.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDateBounds({
+      min: toDateInputValue(now),
+      max: toDateInputValue(new Date(now.getTime() + SCHEDULE_MAX_DAYS_AHEAD * 24 * 60 * 60 * 1000)),
+    });
+  }, []);
   const [pending, setPending] = useState(false);
   const [unavailableItemIds, setUnavailableItemIds] = useState<string[]>([]);
   const [priceNotice, setPriceNotice] = useState(false);
@@ -50,6 +82,21 @@ export function CheckoutView() {
 
   async function handlePay() {
     if (payingRef.current) return;
+
+    let scheduledFor: string | undefined;
+    if (scheduleMode === "schedule") {
+      if (!scheduleDate || !scheduleTime) {
+        setScheduleError("Choose a pickup date and time.");
+        return;
+      }
+      // The date/time inputs are a Chennai pickup slot, not a moment in the
+      // browser's own timezone — build the instant with an explicit IST
+      // offset so a customer whose device clock isn't IST still gets the
+      // slot they picked (the server validates the 9am-10pm window in IST).
+      scheduledFor = `${scheduleDate}T${scheduleTime}:00+05:30`;
+    }
+    setScheduleError(null);
+
     payingRef.current = true;
     setPending(true);
     setFailureMessage(null);
@@ -59,6 +106,7 @@ export function CheckoutView() {
       items: basket.lines.map((line) => ({ itemId: line.itemId, quantity: line.quantity })),
       expectedTotalPaise: totals.totalPaise,
       simulateSuccess: paymentChoice === "success",
+      scheduledFor,
     });
 
     if (result.status === "UNAUTHENTICATED") {
@@ -84,6 +132,15 @@ export function CheckoutView() {
     if (result.status === "ITEMS_UNAVAILABLE") {
       payingRef.current = false;
       setUnavailableItemIds(result.unavailableItemIds);
+      setPending(false);
+      return;
+    }
+
+    if (result.status === "INVALID_SCHEDULE") {
+      payingRef.current = false;
+      setScheduleError(
+        `Choose a pickup time between ${SCHEDULE_WINDOW_START} and ${SCHEDULE_WINDOW_END}, within the next ${SCHEDULE_MAX_DAYS_AHEAD} days.`,
+      );
       setPending(false);
       return;
     }
@@ -141,6 +198,56 @@ export function CheckoutView() {
             <Typography variant="body2" sx={{ mt: 1.5 }}>
               Pickup only: collect at the counter
             </Typography>
+          </Card>
+
+          <Card sx={{ p: 3 }}>
+            <FormLabel sx={{ fontWeight: 600, color: "text.primary" }}>Pickup time</FormLabel>
+            <ToggleButtonGroup
+              exclusive
+              value={scheduleMode}
+              onChange={(_event, value) => {
+                if (value) setScheduleMode(value);
+              }}
+              sx={{ display: "flex", mt: 1 }}
+            >
+              <ToggleButton value="asap" sx={{ flex: 1 }}>
+                ASAP
+              </ToggleButton>
+              <ToggleButton value="schedule" sx={{ flex: 1 }}>
+                Schedule for later
+              </ToggleButton>
+            </ToggleButtonGroup>
+
+            {scheduleMode === "schedule" && (
+              <Box sx={{ display: "flex", gap: 1.5, mt: 2, flexWrap: "wrap" }}>
+                <TextField
+                  type="date"
+                  label="Pickup date"
+                  size="small"
+                  value={scheduleDate}
+                  onChange={(event) => setScheduleDate(event.target.value)}
+                  slotProps={{
+                    htmlInput: { min: dateBounds?.min, max: dateBounds?.max },
+                  }}
+                />
+                <TextField
+                  type="time"
+                  label="Pickup time"
+                  size="small"
+                  value={scheduleTime}
+                  onChange={(event) => setScheduleTime(event.target.value)}
+                  slotProps={{
+                    htmlInput: { min: SCHEDULE_WINDOW_START, max: SCHEDULE_WINDOW_END },
+                  }}
+                />
+              </Box>
+            )}
+
+            {scheduleError && (
+              <Alert severity="error" sx={{ mt: 2 }}>
+                {scheduleError}
+              </Alert>
+            )}
           </Card>
 
           <Card sx={{ px: 3, py: 1 }}>

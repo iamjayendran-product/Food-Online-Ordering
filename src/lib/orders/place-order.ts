@@ -20,6 +20,10 @@ export const placeOrderInputSchema = z
     items: z.array(orderLineInputSchema).min(1),
     expectedTotalPaise: z.number().int().nonnegative(),
     simulateSuccess: z.boolean(),
+    // Absent/undefined = ASAP pickup. Structural validity only here — the
+    // pickup-window business rule (future, within 7 days, 9am-10pm IST) is
+    // checked separately so it can return its own INVALID_SCHEDULE status.
+    scheduledFor: z.coerce.date().optional(),
   })
   .strict();
 
@@ -30,7 +34,27 @@ export type PlaceOrderResult =
   | { status: "PAYMENT_FAILED" }
   | { status: "ITEMS_UNAVAILABLE"; unavailableItemIds: string[] }
   | { status: "PRICE_CHANGED"; correctedLines: { itemId: string; unitPricePaise: number }[] }
+  | { status: "INVALID_SCHEDULE" }
   | { status: "VALIDATION_ERROR" };
+
+const SCHEDULE_MAX_DAYS_AHEAD = 7;
+const SCHEDULE_WINDOW_START_HOUR = 9;
+const SCHEDULE_WINDOW_END_HOUR = 22;
+
+function isValidSchedule(scheduledFor: Date, now: Date): boolean {
+  if (scheduledFor.getTime() <= now.getTime()) return false;
+  const maxDate = new Date(now.getTime() + SCHEDULE_MAX_DAYS_AHEAD * 24 * 60 * 60 * 1000);
+  if (scheduledFor.getTime() > maxDate.getTime()) return false;
+
+  const istHour = Number(
+    new Intl.DateTimeFormat("en-IN", {
+      timeZone: "Asia/Kolkata",
+      hour: "numeric",
+      hour12: false,
+    }).format(scheduledFor),
+  );
+  return istHour >= SCHEDULE_WINDOW_START_HOUR && istHour < SCHEDULE_WINDOW_END_HOUR;
+}
 
 export async function placeOrder(
   userId: string,
@@ -42,6 +66,10 @@ export async function placeOrder(
     return { status: "VALIDATION_ERROR" };
   }
   const input = parsed.data;
+
+  if (input.scheduledFor && !isValidSchedule(input.scheduledFor, new Date())) {
+    return { status: "INVALID_SCHEDULE" };
+  }
 
   const restaurant = await db.restaurant.findUnique({ where: { slug: input.restaurantSlug } });
   if (!restaurant) {
@@ -93,6 +121,7 @@ export async function placeOrder(
         gstPaise,
         totalPaise,
         paymentProvider: provider.name,
+        scheduledFor: input.scheduledFor,
         items: {
           create: input.items.map((line) => {
             const item = menuItemsById.get(line.itemId)!;

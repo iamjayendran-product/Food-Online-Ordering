@@ -29,6 +29,14 @@ export default async function OrderConfirmationPage({
     timeZone: "Asia/Kolkata",
   }).format(order.createdAt);
 
+  const pickupLabel = order.scheduledFor
+    ? `Pickup: ${new Intl.DateTimeFormat("en-IN", {
+        dateStyle: "medium",
+        timeStyle: "short",
+        timeZone: "Asia/Kolkata",
+      }).format(order.scheduledFor)}`
+    : "Pickup: ASAP";
+
   return (
     <Box sx={{ maxWidth: 640, mx: "auto" }}>
       <Box sx={{ textAlign: "center", py: 2 }}>
@@ -48,7 +56,7 @@ export default async function OrderConfirmationPage({
           </Typography>
         </Box>
         <Typography variant="body2" sx={{ mt: 1.5, fontWeight: 600 }}>
-          Pickup: ASAP
+          {pickupLabel}
         </Typography>
       </Card>
 
