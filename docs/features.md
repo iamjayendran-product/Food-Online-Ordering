@@ -21,8 +21,10 @@ This is the single place to see what's being built, in what order, and where eac
 | F5 | Checkout | P0-5 | F1, F4 | TC-5.1–5.5 (5) | **Done** | PASS (round 1/1, reviewed with F6) | 2026-09-11 |
 | F6 | Place order and confirmation | P0-6 | F5 | TC-6.1–6.16 (16) + TC-J.1 | **Done** | PASS (round 1/1, reviewed with F5) | 2026-09-11 |
 | F7 | Discovery and menu experience | P0-7 | F2, F3 | TC-7.1–7.9 (9) | **Done** | PASS (round 2/2) | 2026-09-15 |
+| F8 | Rebrand: Foodlicious, palette, font | (restyle, no new TCs) | F7 | n/a | **Done** | PASS (round 3/3, reviewed with F9) | 2026-09-16 |
+| F9 | Real T Nagar restaurant data | (data only, no new TCs) | F2, F3, F7 | n/a | **Done** | PASS (round 3/3, reviewed with F8) | 2026-09-16 |
 
-**Build order:** F0 → F1 → F2 → F3 → F4 → F5 → F6, one feature per cycle. F7 and the Material UI redesign followed as owner-requested work after v1 shipped.
+**Build order:** F0 → F1 → F2 → F3 → F4 → F5 → F6, one feature per cycle. F7, the Material UI redesign, and the Foodlicious relaunch (F8 onward) followed as owner-requested work after v1 shipped — see `docs/superpowers/specs/2026-09-16-foodlicious-relaunch-design.md` and its plan.
 
 ## Supporting work
 
@@ -263,6 +265,8 @@ Reviewer: `PASS` on the first round for both F5 and F6 — no additional defects
 | 2026-09-14 | UI rebuilt on Material UI (white & bronze, UberEats-style); Tailwind removed. Reviewer round 1 FIXED (heading-hierarchy regression, h1→h3 skip), round 2 PASS. Committed (commit f6709a8). |
 | 2026-09-14 | F7 (discovery and menu experience) built: FoodStation rename, store photo carousels, ratings, pickup times, veg markers, favourites, item photos, Recommended section. Not yet reviewed or committed at session end. |
 | 2026-09-15 | F7 reviewed: round 1 FIXED an SSR/hydration mismatch (`Chip icon` prop) that was intermittently corrupting an unrelated test (TC-2.5) via a forced remount, plus a test-coverage gap in TC-7.8 ("only available dishes are recommended" was untested). Round 2 PASS. Tracker brought up to date and committed. |
+| 2026-09-16 | Owner requested a 12-item relaunch (rename to Foodlicious, real restaurant data, campaigns, hover/hero carousels, new palette, new font, pre-order, cash/online payment redesign, simulated kitchen-cam, menu-layout audit). Brainstormed to an approved design spec and a 6-batch (F8-F13) implementation plan. |
+| 2026-09-16 | F8 (rebrand/palette/font) + F9 (real T Nagar restaurant data) built together. Reviewer round 1 FIXED stale bronze hex values left in two components, a stale palette description in CLAUDE.md, and a missing disclaimer footer the design spec required. Round 2 FIXED stale PRD Appendix B rows (TC-2.1/TC-2.2) and an unexplained test deviation. Round 3 PASS — also confirmed via worktree bisection that an intermittent TC-7.5 flake is a pre-existing F7 bug, not a regression. Committed (commit 20f93cb). |
 
 ---
 
