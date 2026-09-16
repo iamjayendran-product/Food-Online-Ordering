@@ -9,6 +9,7 @@ import { getRestaurantMenu } from "@/lib/restaurants";
 import { MenuItemRow } from "@/components/menu-item-row";
 import { RatingStars } from "@/components/rating-stars";
 import { AddToBasketButton } from "@/components/add-to-basket-button";
+import { RestaurantHeroBanner } from "@/components/restaurant-hero-banner";
 import { formatInr } from "@/lib/format";
 
 export default async function RestaurantPage({
@@ -25,6 +26,8 @@ export default async function RestaurantPage({
 
   return (
     <Box>
+      <RestaurantHeroBanner images={menu.images} name={menu.name} />
+
       <Box
         sx={{
           borderRadius: 4,

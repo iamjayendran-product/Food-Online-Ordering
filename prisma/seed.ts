@@ -492,6 +492,22 @@ const restaurants: SeedRestaurant[] = [
   },
 ];
 
+type SeedCampaign = {
+  restaurantSlug: string;
+  headline: string;
+  sortOrder: number;
+};
+
+// Decorative promo text for the discovery-page marquee, not a real
+// promotions system: doesn't affect pricing or availability.
+const campaigns: SeedCampaign[] = [
+  { restaurantSlug: "ratna-cafe", headline: "20% off today at Ratna Cafe", sortOrder: 0 },
+  { restaurantSlug: "adyar-ananda-bhavan", headline: "New: Filter coffee combo at A2B", sortOrder: 1 },
+  { restaurantSlug: "absolute-barbecues", headline: "Weekend grill buffet special", sortOrder: 2 },
+  { restaurantSlug: "the-grand-sweets-and-snacks", headline: "Order ahead: festive sweet boxes", sortOrder: 3 },
+  { restaurantSlug: "sin-and-tonic", headline: "Happy hour snacks, 15% off", sortOrder: 4 },
+];
+
 type SeedCustomer = {
   email: string;
   name: string;
@@ -574,6 +590,17 @@ async function seedCustomer(customer: SeedCustomer) {
   });
 }
 
+async function seedCampaign(campaign: SeedCampaign) {
+  const restaurant = await prisma.restaurant.findUniqueOrThrow({
+    where: { slug: campaign.restaurantSlug },
+  });
+  await prisma.campaign.upsert({
+    where: { restaurantId_headline: { restaurantId: restaurant.id, headline: campaign.headline } },
+    create: { restaurantId: restaurant.id, headline: campaign.headline, sortOrder: campaign.sortOrder },
+    update: { sortOrder: campaign.sortOrder },
+  });
+}
+
 // Removes restaurants that used to be seeded but no longer are (e.g. a full
 // data refresh like the Foodlicious relaunch's real-restaurant roster).
 // Skips any that still have real orders against them rather than silently
@@ -601,6 +628,9 @@ async function main() {
   await removeStaleRestaurants();
   for (const restaurant of restaurants) {
     await seedRestaurant(restaurant);
+  }
+  for (const campaign of campaigns) {
+    await seedCampaign(campaign);
   }
   for (const customer of customers) {
     await seedCustomer(customer);

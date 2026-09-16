@@ -6,8 +6,10 @@ import Typography from "@mui/material/Typography";
 import SearchIcon from "@mui/icons-material/Search";
 import { listRestaurants } from "@/lib/restaurants";
 import { listFavoriteRestaurantIds } from "@/lib/favorites";
+import { listCampaigns } from "@/lib/campaigns";
 import { getCurrentUser } from "@/lib/dal";
 import { RestaurantCard } from "@/components/restaurant-card";
+import { CampaignMarquee } from "@/components/campaign-marquee";
 import { TextLink } from "@/components/next-link-mui";
 import { brand } from "@/theme";
 
@@ -17,7 +19,11 @@ export default async function HomePage({
   searchParams: Promise<{ q?: string }>;
 }) {
   const { q } = await searchParams;
-  const [restaurants, user] = await Promise.all([listRestaurants(q), getCurrentUser()]);
+  const [restaurants, user, campaigns] = await Promise.all([
+    listRestaurants(q),
+    getCurrentUser(),
+    listCampaigns(),
+  ]);
   const favoriteIds = user ? await listFavoriteRestaurantIds(user.id) : [];
   const favorites = new Set(favoriteIds);
 
@@ -50,7 +56,7 @@ export default async function HomePage({
             type="search"
             name="q"
             defaultValue={q ?? ""}
-            placeholder="Search restaurants"
+            placeholder="Search restaurants, items, cuisines..."
             size="small"
             fullWidth
             slotProps={{
@@ -61,7 +67,7 @@ export default async function HomePage({
                     <SearchIcon fontSize="small" sx={{ color: "text.secondary" }} />
                   </InputAdornment>
                 ),
-                sx: { borderRadius: 999, height: 48 },
+                sx: { borderRadius: 999, height: 40, fontSize: "0.875rem" },
               },
             }}
             sx={{ "& fieldset": { border: "none" } }}
@@ -70,12 +76,15 @@ export default async function HomePage({
             type="submit"
             variant="contained"
             color="secondary"
-            sx={{ height: 48, flexShrink: 0, px: 3 }}
+            size="small"
+            sx={{ height: 40, flexShrink: 0, px: 3 }}
           >
             Search
           </Button>
         </Box>
       </Box>
+
+      <CampaignMarquee campaigns={campaigns} />
 
       {restaurants.length === 0 ? (
         <Box sx={{ py: 6, textAlign: "center" }}>

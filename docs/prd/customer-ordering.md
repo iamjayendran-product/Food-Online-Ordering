@@ -172,6 +172,16 @@ Presentation over the existing order flow. Nothing here changes pricing, availab
 
 *Technical considerations:* pickup time, rating and review count are stored per restaurant and seeded; vegetarian status is derived from the menu rather than stored, so it cannot drift from the dishes on sale. Favourites are per user in the database, so they follow the customer across devices. Because Recommended repeats items, the full menu sits inside a stable `#menu-categories` container that tests scope to.
 
+#### P0-8: Discovery page UX (F10, F11)
+Presentation over the existing discovery flow. Nothing here changes search results, pricing or availability.
+
+- The search field's placeholder reads **"Search restaurants, items, cuisines..."**. Search still matches restaurant name only — the wording sets expectations for a future search expansion, not a behavior change here. [TC-8.1]
+- Below the search field, a **campaigns marquee** auto-scrolls promotional headlines from a subset of restaurants. It pauses while hovered or focused. This is decorative — it doesn't affect pricing or availability. [TC-8.2, TC-8.4]
+- **Given** a store card carousel with several photos, **when** the customer hovers over it, **then** it automatically advances through the photos without a click. The existing click/keyboard arrows still work for touch and non-hover access. [TC-8.3]
+- **Given** a restaurant with photos, **when** its menu page loads, **then** a full-width hero banner above the name/rating/address block auto-advances through those photos. A restaurant with no photos shows no hero banner. [TC-8.5, TC-8.6]
+
+*Technical considerations:* the hero banner reuses `Restaurant.images` — the same photos already shown on the discovery card, not a separate field. Campaigns are seeded, decorative promotional text (a new `Campaign` model), not a real discounts/promotions system.
+
 ### Nice-to-Have (P1)
 **None committed for v1.** The scope is deliberately tight. Anything proposed for v1 enters here only with a matching removal from P0 or an explicit timeline extension.
 
@@ -365,6 +375,16 @@ All test cases are automated with Playwright. **B** = browser test; **L** = logi
 | TC-7.7 | B | Menu items | Every row inside `#menu-categories` has exactly one photo |
 | TC-7.8 | B | Menu page opens | First level-2 heading is "Recommended"; a recommended dish appears twice, an unavailable dish once |
 | TC-7.9 | B | Branding | Page title and header wordmark both read Foodlicious |
+
+### TC-8: Discovery page UX (P0-8)
+| ID | Type | Scenario | Expected |
+|---|---|---|---|
+| TC-8.1 | B | Home page search field | Placeholder reads "Search restaurants, items, cuisines..." |
+| TC-8.2 | B | Home page below the search field | A campaigns marquee is present with at least one seeded headline |
+| TC-8.3 | B | Hovering a card's carousel | The photo advances without a click, page stays put |
+| TC-8.4 | B | Hovering the campaigns marquee | Its scroll animation pauses |
+| TC-8.5 | B | Opening a restaurant with photos | A hero banner above the name/rating/address block auto-advances |
+| TC-8.6 | B | Opening a restaurant with no photos | No hero banner element, no broken image |
 
 ### TC-J: End-to-end journey (Goal 1)
 | ID | Type | Scenario | Expected |

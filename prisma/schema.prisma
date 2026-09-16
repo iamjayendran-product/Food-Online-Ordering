@@ -40,6 +40,7 @@ model Restaurant {
   items      MenuItem[]
   orders     Order[]
   favorites  Favorite[]
+  campaigns  Campaign[]
 }
 
 model MenuCategory {
@@ -73,6 +74,18 @@ model MenuItem {
 
   @@unique([categoryId, name])
   @@index([restaurantId])
+}
+
+model Campaign {
+  id           String  @id @default(cuid())
+  restaurantId String
+  headline     String
+  imageUrl     String?
+  sortOrder    Int
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@unique([restaurantId, headline])
 }
 
 model Favorite {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Box from "@mui/material/Box";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
@@ -61,13 +61,35 @@ function ArrowControl({
   );
 }
 
+const HOVER_ADVANCE_MS = 900;
+
 export function RestaurantCarousel({ images, name }: { images: string[]; name: string }) {
   const [index, setIndex] = useState(0);
   const count = images.length;
   const show = (next: number) => setIndex(((next % count) + count) % count);
 
+  // Auto-advance while hovered; the click/keyboard arrows below cover touch
+  // and non-hover access, so this is additive, not a replacement.
+  const hoverInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+  const startHoverAdvance = () => {
+    if (count <= 1 || hoverInterval.current) return;
+    hoverInterval.current = setInterval(() => {
+      setIndex((current) => (current + 1) % count);
+    }, HOVER_ADVANCE_MS);
+  };
+  const stopHoverAdvance = () => {
+    if (!hoverInterval.current) return;
+    clearInterval(hoverInterval.current);
+    hoverInterval.current = null;
+  };
+  useEffect(() => stopHoverAdvance, []);
+
   return (
-    <Box sx={{ position: "relative", height: MEDIA_HEIGHT, overflow: "hidden" }}>
+    <Box
+      onMouseEnter={startHoverAdvance}
+      onMouseLeave={stopHoverAdvance}
+      sx={{ position: "relative", height: MEDIA_HEIGHT, overflow: "hidden" }}
+    >
       <Box
         component="img"
         src={images[index]}
