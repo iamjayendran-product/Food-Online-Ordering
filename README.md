@@ -1,4 +1,4 @@
-# FoodStation
+# Foodlicious
 
 An online food ordering webapp (Foodhub-style) for restaurants in T Nagar, Chennai. See [CLAUDE.md](./CLAUDE.md) for full project scope, architecture, and conventions.
 

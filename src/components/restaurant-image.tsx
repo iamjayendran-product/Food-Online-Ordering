@@ -1,4 +1,5 @@
 import Box from "@mui/material/Box";
+import { brand } from "@/theme";
 
 const MEDIA_HEIGHT = 168;
 
@@ -30,7 +31,7 @@ export function RestaurantImage({ name }: { name: string }) {
         width: "100%",
         // Literal, not an sx callback: a theme callback is a function, and a
         // Server Component can't pass one to a Client Component.
-        background: "linear-gradient(135deg, #CD7F32 0%, #5C3A16 100%)",
+        background: `linear-gradient(135deg, ${brand.tomatoLight} 0%, ${brand.tomatoDark} 100%)`,
         color: "#FFFFFF",
         fontSize: "1.75rem",
         fontWeight: 700,

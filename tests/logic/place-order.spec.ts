@@ -9,10 +9,10 @@ async function getPriya() {
 
 async function getBiryaniItems() {
   const restaurant = await testDb.restaurant.findUniqueOrThrow({
-    where: { slug: "ranganathan-street-biryani" },
+    where: { slug: "dindigul-thalappakatti" },
   });
   const chicken = await testDb.menuItem.findFirstOrThrow({
-    where: { restaurantId: restaurant.id, name: "Chicken Biryani" },
+    where: { restaurantId: restaurant.id, name: "Seeraga Samba Chicken Biryani" },
   });
   const unavailable = await testDb.menuItem.findFirstOrThrow({
     where: { restaurantId: restaurant.id, name: "Gobi Manchurian" },
@@ -44,7 +44,7 @@ test("TC-6.1 a valid order is placed with current menu prices, item snapshots, a
   });
   expect(order.status).toBe("PLACED");
   expect(order.items).toHaveLength(1);
-  expect(order.items[0].name).toBe("Chicken Biryani");
+  expect(order.items[0].name).toBe("Seeraga Samba Chicken Biryani");
   expect(order.items[0].unitPricePaise).toBe(chicken.pricePaise);
   expect(order.paymentRef).toMatch(/^mock_/);
 });
@@ -108,7 +108,7 @@ test("TC-6.4 an item that became unavailable is rejected with no order", async (
 test("TC-6.5 items from two restaurants, or an unknown item, are rejected as unavailable", async () => {
   const user = await getPriya();
   const { restaurant, chicken } = await getBiryaniItems();
-  const other = await testDb.restaurant.findUniqueOrThrow({ where: { slug: "pondy-bazaar-tiffin-house" } });
+  const other = await testDb.restaurant.findUniqueOrThrow({ where: { slug: "hotel-saravana-bhavan" } });
   const otherItem = await testDb.menuItem.findFirstOrThrow({ where: { restaurantId: other.id } });
 
   const crossRestaurant = await placeOrder(

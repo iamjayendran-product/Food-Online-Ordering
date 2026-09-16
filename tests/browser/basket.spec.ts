@@ -2,57 +2,71 @@ import { test, expect } from "@playwright/test";
 import { BASKET_STORAGE_KEY } from "../support/basket";
 
 test("TC-4.1 a guest adding an item updates the header count and the basket", async ({ page }) => {
-  await page.goto("/restaurants/ranganathan-street-biryani");
-  await page.locator("#menu-categories li", { hasText: "Chicken Biryani" }).getByRole("button", { name: "Add" }).click();
+  await page.goto("/restaurants/dindigul-thalappakatti");
+  await page
+    .locator("#menu-categories li", { hasText: "Seeraga Samba Chicken Biryani" })
+    .getByRole("button", { name: "Add" })
+    .click();
 
   await expect(page.getByRole("link", { name: "Basket (1)" })).toBeVisible();
 
   await page.goto("/basket");
-  const basketRow = page.locator("li", { hasText: "Chicken Biryani" });
-  await expect(basketRow.getByLabel("Quantity of Chicken Biryani", { exact: true })).toHaveText("1");
-  await expect(basketRow).toContainText("₹220");
+  const basketRow = page.locator("li", { hasText: "Seeraga Samba Chicken Biryani" });
+  await expect(
+    basketRow.getByLabel("Quantity of Seeraga Samba Chicken Biryani", { exact: true }),
+  ).toHaveText("1");
+  await expect(basketRow).toContainText("₹260");
 });
 
 test("TC-4.6 adding from a different restaurant and choosing Cancel leaves the basket unchanged", async ({ page }) => {
-  await page.goto("/restaurants/ranganathan-street-biryani");
-  await page.locator("#menu-categories li", { hasText: "Chicken Biryani" }).getByRole("button", { name: "Add" }).click();
+  await page.goto("/restaurants/dindigul-thalappakatti");
+  await page
+    .locator("#menu-categories li", { hasText: "Seeraga Samba Chicken Biryani" })
+    .getByRole("button", { name: "Add" })
+    .click();
 
-  await page.goto("/restaurants/pondy-bazaar-tiffin-house");
-  await page.locator("#menu-categories li", { hasText: "Masala Dosa" }).getByRole("button", { name: "Add" }).click();
+  await page.goto("/restaurants/hotel-saravana-bhavan");
+  await page.locator("#menu-categories li", { hasText: "Mysore Masala Dosa" }).getByRole("button", { name: "Add" }).click();
 
   await expect(page.getByRole("alertdialog", { name: "Start a new basket?" })).toBeVisible();
   await page.getByRole("button", { name: "Cancel" }).click();
 
   await page.goto("/basket");
-  await expect(page.getByText("Chicken Biryani")).toBeVisible();
-  await expect(page.getByText("Masala Dosa")).toHaveCount(0);
+  await expect(page.getByText("Seeraga Samba Chicken Biryani")).toBeVisible();
+  await expect(page.getByText("Mysore Masala Dosa")).toHaveCount(0);
 });
 
 test("TC-4.7 adding from a different restaurant and choosing Confirm replaces the basket", async ({ page }) => {
-  await page.goto("/restaurants/ranganathan-street-biryani");
-  await page.locator("#menu-categories li", { hasText: "Chicken Biryani" }).getByRole("button", { name: "Add" }).click();
+  await page.goto("/restaurants/dindigul-thalappakatti");
+  await page
+    .locator("#menu-categories li", { hasText: "Seeraga Samba Chicken Biryani" })
+    .getByRole("button", { name: "Add" })
+    .click();
 
-  await page.goto("/restaurants/pondy-bazaar-tiffin-house");
-  await page.locator("#menu-categories li", { hasText: "Masala Dosa" }).getByRole("button", { name: "Add" }).click();
+  await page.goto("/restaurants/hotel-saravana-bhavan");
+  await page.locator("#menu-categories li", { hasText: "Mysore Masala Dosa" }).getByRole("button", { name: "Add" }).click();
 
   await expect(page.getByRole("alertdialog", { name: "Start a new basket?" })).toBeVisible();
   await page.getByRole("button", { name: "Confirm" }).click();
 
   await page.goto("/basket");
-  await expect(page.getByText("Masala Dosa")).toBeVisible();
-  await expect(page.getByText("Chicken Biryani")).toHaveCount(0);
+  await expect(page.getByText("Mysore Masala Dosa")).toBeVisible();
+  await expect(page.getByText("Seeraga Samba Chicken Biryani")).toHaveCount(0);
 });
 
 test("TC-4.8 the basket persists across a reload and navigating away and back", async ({ page }) => {
-  await page.goto("/restaurants/ranganathan-street-biryani");
-  await page.locator("#menu-categories li", { hasText: "Chicken Biryani" }).getByRole("button", { name: "Add" }).click();
+  await page.goto("/restaurants/dindigul-thalappakatti");
+  await page
+    .locator("#menu-categories li", { hasText: "Seeraga Samba Chicken Biryani" })
+    .getByRole("button", { name: "Add" })
+    .click();
   await expect(page.getByRole("link", { name: "Basket (1)" })).toBeVisible();
 
   await page.reload();
   await expect(page.getByRole("link", { name: "Basket (1)" })).toBeVisible();
 
   await page.goto("/");
-  await page.goto("/restaurants/ranganathan-street-biryani");
+  await page.goto("/restaurants/dindigul-thalappakatti");
   await expect(page.getByRole("link", { name: "Basket (1)" })).toBeVisible();
 });
 

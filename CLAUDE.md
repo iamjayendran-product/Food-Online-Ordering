@@ -1,6 +1,6 @@
 @AGENTS.md
 
-# FoodStation
+# Foodlicious
 
 ## Overview
 
@@ -25,7 +25,7 @@ There is no delivery-partner role.
 - **Next.js (App Router, TypeScript)** — full-stack only. No separate backend/API service.
 - **Mutations use Server Actions**, not route handlers — `"use server"` functions in `actions.ts` files next to the pages that call them (e.g. `src/app/(customer)/login/actions.ts`, `.../checkout/actions.ts`). Pages read data in Server Components via `src/lib`. `src/app/api/` stays empty unless something genuinely needs a route handler (a webhook, a non-Next.js client) — don't add one for ordinary form submissions.
 - **PostgreSQL** via **Prisma ORM**, using the `prisma-client` generator + `@prisma/adapter-pg` driver adapter (Prisma 7). Relational data (restaurants → menu items, users → orders → order items) fits a relational DB much better than NoSQL.
-- **Material UI (MUI v9)** with Emotion for styling. The theme — palette, typography, component defaults — lives in `src/theme.ts` and is applied by `src/components/theme-registry.tsx`; `@mui/material-nextjs/v16-appRouter` handles Emotion SSR from `src/app/layout.tsx`. Brand colours are white (canvas and surfaces) and bronze (every interactive element). There is no utility-class framework: Tailwind was removed during the MUI migration, because two CSS resets and competing layer order is not worth maintaining.
+- **Material UI (MUI v9)** with Emotion for styling. The theme — palette, typography, component defaults — lives in `src/theme.ts` and is applied by `src/components/theme-registry.tsx`; `@mui/material-nextjs/v16-appRouter` handles Emotion SSR from `src/app/layout.tsx`. Brand colours are white (canvas and surfaces) and Tomato Burst (every interactive element), with Sunshine for ratings/highlight badges, Forest Green for success/vegetarian markers, and Kiwi as a secondary accent. There is no utility-class framework: Tailwind was removed during the MUI migration, because two CSS resets and competing layer order is not worth maintaining.
 - **Docker Compose** runs Postgres locally (`docker-compose.yml`).
 
 Why this stack: one language (TypeScript) across the whole app keeps context-switching low for a learning project, and Prisma gives type-safe queries and migrations that match the relational shape of this domain (orders referencing menu items, restaurants, and users with foreign keys and transactional integrity).
@@ -55,8 +55,8 @@ src/
                             # restaurant card carousel, rating stars, favourite button)
 prisma/
   schema.prisma            # User, Restaurant, MenuCategory, MenuItem, Order, OrderItem, Favorite
-  seed.ts                  # Idempotent seed: 6 T Nagar restaurants (ratings, pickup times, photo
-                            # carousels), 60 items with photos, 18 recommended, 2 demo customers
+  seed.ts                  # Idempotent seed: 10 real T Nagar restaurants (ratings, pickup times,
+                            # photo carousels), 91 items with photos, 30 recommended, 2 demo customers
 tests/
   browser/                 # Playwright specs that drive a page
   logic/                   # Playwright specs that call src/lib directly, no browser
@@ -109,7 +109,7 @@ Every feature is reviewed by `.claude/skills/review-feature` (`/review-feature F
 - No comments unless explaining a non-obvious *why* (a workaround, a subtle constraint) — never restate what the code already says.
 - Style with MUI — the `sx` prop and theme tokens (`primary.main`, `text.secondary`, `divider`) — not per-component CSS files. `src/app/globals.css` carries base document rules only.
 - **A Server Component cannot pass a function to a MUI component.** Both `component={NextLink}` and an `sx` callback (`sx={{ background: (theme) => … }}`) push a function across the RSC boundary, and the page dies with "Functions cannot be passed directly to Client Components". Use the pre-bound wrappers in `src/components/next-link-mui.tsx` (`LinkButton`, `LinkTypography`, `LinkCardActionArea`, `TextLink`) and literal values in `sx`. Inside a `"use client"` file both forms are fine.
-- Interactive bronze is `#8C5A22` (5.83:1 on white). The lighter brand bronze `#CD7F32` is only 3.14:1, which fails WCAG AA for text and button fills, so it is limited to gradients, borders and large accents.
+- Interactive Tomato is `#C43A2F` (5.26:1 on white). The lighter `#E4573F` companion is only 3.66:1, which fails WCAG AA for text and button fills, so it is limited to gradients, borders and large accents. Sunshine (`#A87900` for icons, `#F4B400` for filled badge backgrounds) and Kiwi (`#5B8C2A` for icons/borders, `#8BC34A` for filled badge backgrounds) follow the same text-vs-fill split — see `src/theme.ts`'s `brand` export.
 - The Playwright suite pins the accessibility contract (roles, labels, exact strings). Before changing markup, check what the tests assert — e.g. menu and basket rows must stay `<li>`, totals must stay single strings like `Subtotal: ₹220`, and the basket link's name must be exactly `Basket` or `Basket (1)`.
 - Use `zod` for input validation at every server boundary: Server Action inputs, localStorage-persisted state (`parseStoredBasket`). Prefer `.strict()` when the shape must reject unrecognized fields outright rather than silently drop them (e.g. a client-supplied price).
 - Prefer editing/extending existing files over introducing new patterns; keep the three role-based route groups as the organizing structure for pages.

@@ -1,55 +1,80 @@
 import { createTheme } from "@mui/material/styles";
 
-// Brand: white and bronze.
-//
-// Bronze carries every interactive role and white is the canvas. Mapping it the
-// other way round is not viable: MUI paints contained buttons, links, focus
-// rings and active states with `primary`, so a white primary renders white text
-// on white. Classic bronze (#CD7F32) is only 3.14:1 against white — enough for
-// borders and large accents, but below the 4.5:1 WCAG AA needs for text and
-// button fills — so interactive bronze is deepened to #8C5A22 (5.83:1).
-const BRONZE = "#8C5A22";
-const BRONZE_ACCENT = "#CD7F32";
-const BRONZE_DARK = "#5C3A16";
-const BRONZE_TINT = "#FAF7F2";
+// Brand: Sunshine, Tomato Burst, Forest Green, Kiwi — a vibrant multi-accent
+// palette, not a single primary/secondary pair. Each colour keeps one
+// deliberate role, and (following the same methodology as the bronze
+// palette this replaced) every colour used as an icon or text fill directly
+// on white is deepened until it clears the WCAG contrast floor that role
+// needs: 4.5:1 for text/button fills, 3:1 for large-scale icons and
+// non-text UI. The brighter "_LIGHT" companion of each is for filled
+// badge/chip backgrounds with dark text on top, or borders/gradients —
+// never for a colour foreground directly on white.
+const TOMATO = "#C43A2F"; // primary / CTA — 5.26:1 on white
+const TOMATO_LIGHT = "#E4573F"; // borders, gradients, large accents — 3.66:1
+const TOMATO_DARK = "#8C2A22"; // hover/pressed states
+const SUNSHINE = "#A87900"; // ratings / highlight icons on white — 3.89:1
+const SUNSHINE_FILL = "#F4B400"; // badge/chip fill (dark text on top) — 9.48:1 for that text
+const FOREST = "#1B6B3A"; // success / vegetarian marker — 6.54:1
+const KIWI = "#5B8C2A"; // secondary accent icons/borders on white — 4.02:1
+const KIWI_FILL = "#8BC34A"; // badge/chip fill (dark text on top)
 const INK = "#1C1917";
 const INK_MUTED = "#6F6259";
+const TOMATO_TINT = "#FBEAE7";
 
 export const brand = {
-  bronze: BRONZE,
-  bronzeAccent: BRONZE_ACCENT,
-  bronzeTint: BRONZE_TINT,
+  tomato: TOMATO,
+  tomatoLight: TOMATO_LIGHT,
+  tomatoDark: TOMATO_DARK,
+  sunshine: SUNSHINE,
+  sunshineFill: SUNSHINE_FILL,
+  forest: FOREST,
+  kiwi: KIWI,
+  kiwiFill: KIWI_FILL,
 } as const;
 
 export const theme = createTheme({
   palette: {
     mode: "light",
     primary: {
-      main: BRONZE,
-      light: BRONZE_ACCENT,
-      dark: BRONZE_DARK,
+      main: TOMATO,
+      light: TOMATO_LIGHT,
+      dark: TOMATO_DARK,
       contrastText: "#FFFFFF",
     },
-    // White as a usable colour role: secondary buttons and surfaces that sit on
-    // bronze or photography.
     secondary: {
       main: "#FFFFFF",
-      dark: "#F2EDE6",
+      dark: TOMATO_TINT,
       contrastText: INK,
     },
     background: { default: "#FFFFFF", paper: "#FFFFFF" },
     text: { primary: INK, secondary: INK_MUTED },
     divider: "rgba(28, 25, 23, 0.12)",
     error: { main: "#B3261E" },
-    warning: { main: "#8A5A00" },
-    success: { main: "#1B6B3A" },
+    // Ratings and highlight badges — see SUNSHINE/SUNSHINE_FILL above.
+    warning: { main: SUNSHINE, light: SUNSHINE_FILL, contrastText: INK },
+    // Vegetarian marker and confirmation states — the role green already played.
+    success: { main: FOREST },
   },
   shape: { borderRadius: 12 },
   typography: {
     fontFamily: "var(--font-geist-sans), system-ui, sans-serif",
-    h1: { fontSize: "2rem", fontWeight: 700, letterSpacing: "-0.02em" },
-    h2: { fontSize: "1.25rem", fontWeight: 700, letterSpacing: "-0.01em" },
-    h3: { fontSize: "1.0625rem", fontWeight: 600 },
+    h1: {
+      fontFamily: "var(--font-space-grotesk), var(--font-geist-sans), system-ui, sans-serif",
+      fontSize: "2rem",
+      fontWeight: 700,
+      letterSpacing: "-0.02em",
+    },
+    h2: {
+      fontFamily: "var(--font-space-grotesk), var(--font-geist-sans), system-ui, sans-serif",
+      fontSize: "1.25rem",
+      fontWeight: 700,
+      letterSpacing: "-0.01em",
+    },
+    h3: {
+      fontFamily: "var(--font-space-grotesk), var(--font-geist-sans), system-ui, sans-serif",
+      fontSize: "1.0625rem",
+      fontWeight: 600,
+    },
     button: { textTransform: "none", fontWeight: 600 },
     body2: { lineHeight: 1.5 },
   },
@@ -81,7 +106,7 @@ export const theme = createTheme({
     },
     MuiChip: {
       styleOverrides: {
-        root: { borderRadius: 999, backgroundColor: BRONZE_TINT, color: INK_MUTED },
+        root: { borderRadius: 999, backgroundColor: TOMATO_TINT, color: INK_MUTED },
       },
     },
     MuiOutlinedInput: {
@@ -89,7 +114,7 @@ export const theme = createTheme({
     },
     MuiLink: {
       defaultProps: { underline: "hover" },
-      styleOverrides: { root: { color: BRONZE, fontWeight: 600 } },
+      styleOverrides: { root: { color: TOMATO, fontWeight: 600 } },
     },
     MuiContainer: { defaultProps: { maxWidth: "lg" } },
   },

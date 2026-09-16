@@ -3,8 +3,11 @@ import { loginAs } from "../support/auth";
 import { testDb } from "../support/db";
 
 async function addChickenBiryaniToBasket(page: import("@playwright/test").Page) {
-  await page.goto("/restaurants/ranganathan-street-biryani");
-  await page.locator("#menu-categories li", { hasText: "Chicken Biryani" }).getByRole("button", { name: "Add" }).click();
+  await page.goto("/restaurants/dindigul-thalappakatti");
+  await page
+    .locator("#menu-categories li", { hasText: "Seeraga Samba Chicken Biryani" })
+    .getByRole("button", { name: "Add" })
+    .click();
 }
 
 test("TC-5.1 a guest is sent to log in and returns to checkout with the basket intact", async ({ page }) => {
@@ -18,7 +21,7 @@ test("TC-5.1 a guest is sent to log in and returns to checkout with the basket i
   await page.getByRole("button", { name: "Log in" }).click();
 
   await expect(page).toHaveURL("/checkout");
-  await expect(page.getByText("Chicken Biryani")).toBeVisible();
+  await expect(page.getByText("Seeraga Samba Chicken Biryani")).toBeVisible();
 });
 
 test("TC-5.2 checkout shows the restaurant, pickup note, items and totals matching the basket", async ({ page }) => {
@@ -26,13 +29,13 @@ test("TC-5.2 checkout shows the restaurant, pickup note, items and totals matchi
   await loginAs(page, "priya@example.com");
   await page.goto("/checkout");
 
-  await expect(page.getByRole("heading", { name: "Ranganathan Street Biryani" })).toBeVisible();
-  await expect(page.getByText("45 Ranganathan Street, T Nagar, Chennai")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Dindigul Thalappakatti" })).toBeVisible();
+  await expect(page.getByText("Habibullah Road, T Nagar, Chennai")).toBeVisible();
   await expect(page.getByText("Pickup only: collect at the counter")).toBeVisible();
-  await expect(page.getByText("Chicken Biryani")).toBeVisible();
-  await expect(page.getByText("Subtotal: ₹220")).toBeVisible();
-  await expect(page.getByText("GST (5%): ₹11")).toBeVisible();
-  await expect(page.getByText("Total: ₹231")).toBeVisible();
+  await expect(page.getByText("Seeraga Samba Chicken Biryani")).toBeVisible();
+  await expect(page.getByText("Subtotal: ₹260")).toBeVisible();
+  await expect(page.getByText("GST (5%): ₹13")).toBeVisible();
+  await expect(page.getByText("Total: ₹273")).toBeVisible();
 });
 
 test("TC-5.3 opening checkout with an empty basket redirects to the basket page", async ({ page }) => {
@@ -48,7 +51,7 @@ test("TC-5.4 the payment panel defaults to success and the Pay button shows the 
 
   await expect(page.getByLabel("Simulate successful payment")).toBeChecked();
   await expect(page.getByLabel("Simulate failed payment")).not.toBeChecked();
-  await expect(page.getByRole("button", { name: "Pay ₹231" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Pay ₹273" })).toBeVisible();
 });
 
 test("TC-5.5 double-clicking Pay disables the button and places exactly one order", async ({ page }) => {
@@ -56,7 +59,7 @@ test("TC-5.5 double-clicking Pay disables the button and places exactly one orde
   await loginAs(page, "priya@example.com");
   await page.goto("/checkout");
 
-  const payButton = page.getByRole("button", { name: "Pay ₹231" });
+  const payButton = page.getByRole("button", { name: "Pay ₹273" });
   const beforeCount = await testDb.order.count();
 
   // Two native clicks dispatched synchronously in the page, back-to-back,

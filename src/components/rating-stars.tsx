@@ -17,7 +17,7 @@ export function RatingStars({ rating, reviewCount }: { rating: number; reviewCou
       role="img"
       aria-label={`Rated ${rating} out of 5 from ${reviewCount} reviews`}
     >
-      <Box sx={{ display: "flex", color: "primary.light" }}>
+      <Box sx={{ display: "flex", color: "warning.main" }}>
         {Array.from({ length: MAX_STARS }, (_, index) => {
           const position = index + 1;
           if (rounded >= position) return <StarIcon key={position} sx={{ fontSize: 16 }} />;

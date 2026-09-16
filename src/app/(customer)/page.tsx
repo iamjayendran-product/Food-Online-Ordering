@@ -9,6 +9,7 @@ import { listFavoriteRestaurantIds } from "@/lib/favorites";
 import { getCurrentUser } from "@/lib/dal";
 import { RestaurantCard } from "@/components/restaurant-card";
 import { TextLink } from "@/components/next-link-mui";
+import { brand } from "@/theme";
 
 export default async function HomePage({
   searchParams,
@@ -30,7 +31,7 @@ export default async function HomePage({
           mb: 4,
           // Literal, not an sx callback: a theme callback is a function, and a
           // Server Component can't pass one to a Client Component.
-          background: "linear-gradient(135deg, #5C3A16 0%, #CD7F32 100%)",
+          background: `linear-gradient(135deg, ${brand.tomatoDark} 0%, ${brand.tomatoLight} 100%)`,
           color: "#FFFFFF",
         }}
       >

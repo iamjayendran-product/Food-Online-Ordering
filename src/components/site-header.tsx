@@ -29,7 +29,7 @@ export async function SiteHeader() {
           >
             Food
             <Box component="span" sx={{ color: "primary.main" }}>
-              Station
+              licious
             </Box>
           </LinkTypography>
 

@@ -32,7 +32,7 @@ export default async function OrderConfirmationPage({
   return (
     <Box sx={{ maxWidth: 640, mx: "auto" }}>
       <Box sx={{ textAlign: "center", py: 2 }}>
-        <CheckCircleIcon sx={{ fontSize: 56, color: "primary.main" }} />
+        <CheckCircleIcon sx={{ fontSize: 56, color: "success.main" }} />
         <Typography variant="h1" sx={{ mt: 1 }}>
           Order confirmed
         </Typography>

@@ -2,31 +2,35 @@ import { test, expect } from "@playwright/test";
 
 test("TC-3.1 selecting a restaurant shows its name, cuisines, address and categories in order", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("link", { name: /Ranganathan Street Biryani/ }).click();
-  await expect(page).toHaveURL("/restaurants/ranganathan-street-biryani");
+  await page.getByRole("link", { name: /Dindigul Thalappakatti/ }).click();
+  await expect(page).toHaveURL("/restaurants/dindigul-thalappakatti");
 
-  await expect(page.getByRole("heading", { level: 1, name: "Ranganathan Street Biryani" })).toBeVisible();
-  await expect(page.getByText("Biryani, North Indian")).toBeVisible();
-  await expect(page.getByText("45 Ranganathan Street, T Nagar, Chennai")).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Dindigul Thalappakatti" })).toBeVisible();
+  await expect(page.getByText("Biryani, South Indian")).toBeVisible();
+  await expect(page.getByText("Habibullah Road, T Nagar, Chennai")).toBeVisible();
 
   const categoryHeadings = page.getByRole("heading", { level: 2 });
   await expect(categoryHeadings).toHaveText(["Recommended", "Biryani", "Starters", "Beverages"]);
 });
 
 test("TC-3.2 a menu item shows name, description, price and an accessible veg/non-veg marker", async ({ page }) => {
-  await page.goto("/restaurants/ranganathan-street-biryani");
+  await page.goto("/restaurants/dindigul-thalappakatti");
 
-  // Scoped to the full menu: a recommended dish also appears in the shortcut
-  // section above, so an unscoped match would hit two elements.
-  const menu = page.locator("#menu-categories");
-  await expect(menu.getByText("Chicken Biryani")).toBeVisible();
-  await expect(menu.getByText("Slow-cooked basmati with spiced chicken.")).toBeVisible();
-  await expect(menu.getByText("₹220")).toBeVisible();
-  await expect(menu.getByRole("img", { name: "Non-vegetarian" }).first()).toBeVisible();
+  // Scoped to the dish's own row: it's recommended (so its name also appears
+  // in the shortcut section above) and its price isn't unique on this menu
+  // (Mutton Chukka is also ₹260), so an unscoped match would hit more than
+  // one element either way.
+  const row = page.locator("#menu-categories li", { hasText: "Seeraga Samba Chicken Biryani" });
+  await expect(row.getByText("Seeraga Samba Chicken Biryani", { exact: true })).toBeVisible();
+  await expect(
+    row.getByText("Signature short-grain seeraga samba rice with spiced chicken."),
+  ).toBeVisible();
+  await expect(row.getByText("₹260")).toBeVisible();
+  await expect(row.getByRole("img", { name: "Non-vegetarian" })).toBeVisible();
 });
 
 test("TC-3.3 an unavailable item is marked unavailable and its Add button is disabled", async ({ page }) => {
-  await page.goto("/restaurants/ranganathan-street-biryani");
+  await page.goto("/restaurants/dindigul-thalappakatti");
 
   const row = page.locator("#menu-categories li", { hasText: "Gobi Manchurian" });
   await expect(row.getByText("Currently unavailable")).toBeVisible();
@@ -42,10 +46,10 @@ test("TC-3.4 an unknown restaurant shows not found with a link home", async ({ p
 });
 
 test("TC-3.6 the menu is visible and Add works while logged out", async ({ page }) => {
-  await page.goto("/restaurants/ranganathan-street-biryani");
+  await page.goto("/restaurants/dindigul-thalappakatti");
   await expect(page.getByRole("link", { name: "Login" })).toBeVisible();
 
-  const row = page.locator("#menu-categories li", { hasText: "Chicken Biryani" });
+  const row = page.locator("#menu-categories li", { hasText: "Seeraga Samba Chicken Biryani" });
   const addButton = row.getByRole("button", { name: "Add" });
   await expect(addButton).toBeEnabled();
   await addButton.click();

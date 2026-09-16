@@ -3,7 +3,7 @@ import { getRestaurantMenu } from "../../src/lib/restaurants";
 import { formatInr } from "../../src/lib/format";
 
 test("TC-3.5 an empty category is dropped; an unknown restaurant returns nothing", async () => {
-  const menu = await getRestaurantMenu("thyagaraya-filter-kaapi");
+  const menu = await getRestaurantMenu("murugan-idli-shop");
   expect(menu).not.toBeNull();
   expect(menu?.categories.map((c) => c.name)).not.toContain("Seasonal Specials");
 
