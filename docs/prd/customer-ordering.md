@@ -151,7 +151,7 @@ Selecting a restaurant loads its menu.
   - "Order confirmed" and a unique, increasing order number
   - the pickup restaurant's name and address, and "Pickup: ASAP"
   - items, subtotal, GST and total
-  - "Payment: Paid (simulated)" and the time placed (IST)
+  - a payment line and the time placed (IST) — see P0-10 for its exact wording, which depends on the payment method chosen
 
   [TC-6.9, TC-6.12]
 - The confirmation has its own address. It can be reloaded, and only the customer who placed the order can see it. Other customers and failed orders get "not found"; a logged-out visitor is asked to log in and then returned to it. [TC-6.13–TC-6.16]
@@ -190,6 +190,16 @@ Checkout can schedule pickup for later instead of ASAP.
 - Not scheduling (the default) still places the order for **ASAP** pickup, unchanged from before this feature. [TC-9.4]
 
 *Technical considerations:* `Order.scheduledFor` is nullable — null means ASAP, the only behavior that existed before this feature. The pickup window is evaluated in IST regardless of server timezone, since pickup happens in Chennai.
+
+#### P0-10: Payment method and kitchen view (F13)
+Checkout offers a real choice of how the customer pays; the confirmation page adds a simulated view into the kitchen.
+
+- **Given** the checkout page, **when** the customer views the Payment card, **then** they see two buttons, **"Pay in cash"** and **"Pay later online"**, with online selected by default. [TC-10.1]
+- **Given** "Pay in cash" is selected, **when** the customer places the order, **then** no payment charge is attempted, the order is placed outright, the pay button reads "Place order", and the confirmation page shows "Payment: Pay ₹X in cash at pickup". [TC-10.2, TC-10.3]
+- **Given** "Pay later online" is selected, **then** the existing simulated success/failure sub-choice is shown, the pay button reads "Pay ₹X", and the failure/retry behavior from P0-6 is unchanged. The confirmation page shows "Payment: Paid online (simulated)". [TC-10.4]
+- The confirmation page shows a **simulated kitchen view** — an animated illustration, not a real feed — labelled "Simulated live view — `<restaurant name>`'s kitchen" with a "LIVE" badge. [TC-10.5]
+
+*Technical considerations:* `Order.paymentMethod` (`CASH` | `ONLINE`) is a real field, not a copy-only change — a cash order is created with `status: "PLACED"` directly, skipping the `PENDING_PAYMENT` step and the payment provider entirely, since there is nothing to charge. The kitchen view has no backing data or camera; it's a client-side animation that takes only the restaurant's name.
 
 ### Nice-to-Have (P1)
 **None committed for v1.** The scope is deliberately tight. Anything proposed for v1 enters here only with a matching removal from P0 or an explicit timeline extension.
@@ -366,7 +376,7 @@ All test cases are automated with Playwright. **B** = browser test; **L** = logi
 | TC-6.9 | L | Place two successful orders | Order numbers unique and increasing |
 | TC-6.10 | B | Pay with failure selected | Failure message; stays on checkout; basket intact |
 | TC-6.11 | B | Retry with success after a failure | Lands on the confirmation page |
-| TC-6.12 | B | View confirmation | "Order confirmed", order number, pickup name and address, items, totals, "Paid (simulated)"; basket count 0 |
+| TC-6.12 | B | View confirmation | "Order confirmed", order number, pickup name and address, items, totals, "Paid online (simulated)"; basket count 0 |
 | TC-6.13 | B | Reload the confirmation | Same page shown |
 | TC-6.14 | B | Another customer (Arjun) opens Priya's confirmation | Not found |
 | TC-6.15 | B | Logged-out visitor opens a confirmation URL | Asked to log in, then returned to the confirmation |
@@ -402,6 +412,15 @@ All test cases are automated with Playwright. **B** = browser test; **L** = logi
 | TC-9.2 | L | `placeOrder` with a past `scheduledFor` | Rejected as `INVALID_SCHEDULE`; no order created |
 | TC-9.3 | L | `placeOrder` with a time outside 9am-10pm, or more than 7 days out | Rejected as `INVALID_SCHEDULE`; no order created |
 | TC-9.4 | B | Checkout without scheduling, pay | Confirmation shows "Pickup: ASAP" |
+
+### TC-10: Payment method and kitchen view (P0-10)
+| ID | Type | Scenario | Expected |
+|---|---|---|---|
+| TC-10.1 | B | Open checkout | Payment card shows "Pay in cash" and "Pay later online" buttons, online selected by default, success/failure sub-choice visible |
+| TC-10.2 | B | Select "Pay in cash", place order | Confirmation shows "Payment: Pay ₹273 in cash at pickup" |
+| TC-10.3 | L | `placeOrder` with `paymentMethod: "CASH"` and `simulateSuccess: false` | Order placed outright (`PLACED`), no payment provider called, `paymentRef` null |
+| TC-10.4 | B | Toggle between cash and online | Pay button label and online sub-choice show/hide accordingly; failure path under online still works |
+| TC-10.5 | B | View confirmation | "Kitchen view" heading, "LIVE" badge, "Simulated live view — `<restaurant>`'s kitchen" label |
 
 ### TC-J: End-to-end journey (Goal 1)
 | ID | Type | Scenario | Expected |

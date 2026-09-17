@@ -9,6 +9,7 @@ import PlaceOutlinedIcon from "@mui/icons-material/PlaceOutlined";
 import { requireUser } from "@/lib/dal";
 import { getPlacedOrderForUser } from "@/lib/orders/get-order";
 import { formatInr } from "@/lib/format";
+import { KitchenCam } from "@/components/kitchen-cam";
 
 export default async function OrderConfirmationPage({
   params,
@@ -36,6 +37,11 @@ export default async function OrderConfirmationPage({
         timeZone: "Asia/Kolkata",
       }).format(order.scheduledFor)}`
     : "Pickup: ASAP";
+
+  const paymentLabel =
+    order.paymentMethod === "CASH"
+      ? `Payment: Pay ${formatInr(order.totalPaise)} in cash at pickup`
+      : "Payment: Paid online (simulated)";
 
   return (
     <Box sx={{ maxWidth: 640, mx: "auto" }}>
@@ -94,11 +100,13 @@ export default async function OrderConfirmationPage({
           <Typography sx={{ fontWeight: 700 }}>Total: {formatInr(order.totalPaise)}</Typography>
         </Box>
         <Divider sx={{ my: 2 }} />
-        <Typography variant="body2">Payment: Paid (simulated)</Typography>
+        <Typography variant="body2">{paymentLabel}</Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
           {placedAt} IST
         </Typography>
       </Card>
+
+      <KitchenCam restaurantName={order.restaurant.name} />
     </Box>
   );
 }

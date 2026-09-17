@@ -26,6 +26,7 @@ This is the single place to see what's being built, in what order, and where eac
 | F10 | Discovery page UX: search copy, campaigns marquee, hover carousel | P0-8 | F2, F7 | TC-8.1–8.4 (4) | **Done** | PASS (round 1/1, reviewed with F11) | 2026-09-16 |
 | F11 | Restaurant hero banner + menu-layout audit | P0-8 | F3, F7 | TC-8.5–8.6 (2) | **Done** | PASS (round 1/1, reviewed with F10) | 2026-09-16 |
 | F12 | Pre-order scheduling | P0-9 | F5, F6 | TC-9.1–9.4 (4) | **Done** | PASS (round 2/2) | 2026-09-16 |
+| F13 | Payment method (cash/online) redesign + simulated kitchen view | P0-10 | F5, F6 | TC-10.1–10.5 (5) | **Done** | PASS (round 1/1) | 2026-09-17 |
 
 **Build order:** F0 → F1 → F2 → F3 → F4 → F5 → F6, one feature per cycle. F7, the Material UI redesign, and the Foodlicious relaunch (F8 onward) followed as owner-requested work after v1 shipped — see `docs/superpowers/specs/2026-09-16-foodlicious-relaunch-design.md` and its plan.
 
@@ -272,6 +273,7 @@ Reviewer: `PASS` on the first round for both F5 and F6 — no additional defects
 | 2026-09-16 | F8 (rebrand/palette/font) + F9 (real T Nagar restaurant data) built together. Reviewer round 1 FIXED stale bronze hex values left in two components, a stale palette description in CLAUDE.md, and a missing disclaimer footer the design spec required. Round 2 FIXED stale PRD Appendix B rows (TC-2.1/TC-2.2) and an unexplained test deviation. Round 3 PASS — also confirmed via worktree bisection that an intermittent TC-7.5 flake is a pre-existing F7 bug, not a regression. Committed (commit 20f93cb). |
 | 2026-09-16 | F10 (search copy, campaigns marquee, hover carousel) + F11 (restaurant hero banner reusing `Restaurant.images`; menu-layout audit found nothing to change) built together as new PRD requirement P0-8. Reviewer PASS, round 1. Committed (commit 4a9aa7d). |
 | 2026-09-16 | F12 (pre-order scheduling) built as new PRD requirement P0-9. Reviewer round 1 FIXED a real timezone bug: the scheduled pickup instant was built in the browser's local timezone instead of IST, invisible in this session's tests only because the dev machine itself is IST. Round 2 PASS. Committed (commit 4bc645e). |
+| 2026-09-17 | F13 (payment method redesign + simulated kitchen view) built as new PRD requirement P0-10: checkout now offers "Pay in cash" (places the order outright, no charge attempted) and "Pay later online" (unchanged simulated success/failure flow); the confirmation page adds an animated "Kitchen view" card with a LIVE badge. Fixed a self-caught test regression: the new "Pay in cash"/"Pay later online" buttons broke pre-existing tests' ambiguous `/^Pay/` button matcher, and the new kitchen-view test's `getByText("LIVE")` matched the label text too (case-insensitive substring) until scoped to an exact match. Two full-suite runs surfaced unrelated pre-existing flakes (TC-8.3, TC-6.4, TC-6.6, TC-2.1) that passed individually in isolation — not regressions. Reviewer PASS, round 1. |
 
 ---
 

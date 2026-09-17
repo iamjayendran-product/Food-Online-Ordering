@@ -36,6 +36,7 @@ function toDateInputValue(date: Date): string {
 export function CheckoutView() {
   const router = useRouter();
   const { basket, hydrated, remove, clear, refreshBasket } = useBasket();
+  const [paymentMethod, setPaymentMethod] = useState<"CASH" | "ONLINE">("ONLINE");
   const [paymentChoice, setPaymentChoice] = useState<"success" | "failure">("success");
   const [scheduleMode, setScheduleMode] = useState<"asap" | "schedule">("asap");
   const [scheduleDate, setScheduleDate] = useState("");
@@ -105,7 +106,8 @@ export function CheckoutView() {
       restaurantSlug: basket.restaurantSlug,
       items: basket.lines.map((line) => ({ itemId: line.itemId, quantity: line.quantity })),
       expectedTotalPaise: totals.totalPaise,
-      simulateSuccess: paymentChoice === "success",
+      paymentMethod,
+      simulateSuccess: paymentMethod === "ONLINE" ? paymentChoice === "success" : undefined,
       scheduledFor,
     });
 
@@ -297,27 +299,44 @@ export function CheckoutView() {
           </Card>
 
           <Card sx={{ p: 3 }}>
-            <FormControl>
-              <FormLabel sx={{ fontWeight: 600, color: "text.primary" }}>Payment</FormLabel>
-              <RadioGroup
-                value={paymentChoice}
-                onChange={(event) =>
-                  setPaymentChoice(event.target.value === "failure" ? "failure" : "success")
-                }
-                sx={{ mt: 1 }}
-              >
-                <FormControlLabel
-                  value="success"
-                  control={<Radio size="small" />}
-                  label="Simulate successful payment"
-                />
-                <FormControlLabel
-                  value="failure"
-                  control={<Radio size="small" />}
-                  label="Simulate failed payment"
-                />
-              </RadioGroup>
-            </FormControl>
+            <FormLabel sx={{ fontWeight: 600, color: "text.primary" }}>Payment</FormLabel>
+            <ToggleButtonGroup
+              exclusive
+              value={paymentMethod}
+              onChange={(_event, value) => {
+                if (value) setPaymentMethod(value);
+              }}
+              sx={{ display: "flex", mt: 1 }}
+            >
+              <ToggleButton value="CASH" sx={{ flex: 1 }}>
+                Pay in cash
+              </ToggleButton>
+              <ToggleButton value="ONLINE" sx={{ flex: 1 }}>
+                Pay later online
+              </ToggleButton>
+            </ToggleButtonGroup>
+
+            {paymentMethod === "ONLINE" && (
+              <FormControl sx={{ mt: 2 }}>
+                <RadioGroup
+                  value={paymentChoice}
+                  onChange={(event) =>
+                    setPaymentChoice(event.target.value === "failure" ? "failure" : "success")
+                  }
+                >
+                  <FormControlLabel
+                    value="success"
+                    control={<Radio size="small" />}
+                    label="Simulate successful payment"
+                  />
+                  <FormControlLabel
+                    value="failure"
+                    control={<Radio size="small" />}
+                    label="Simulate failed payment"
+                  />
+                </RadioGroup>
+              </FormControl>
+            )}
           </Card>
         </Box>
 
@@ -360,7 +379,7 @@ export function CheckoutView() {
             disabled={pending || unavailableItemIds.length > 0}
             sx={{ mt: 3, height: 48 }}
           >
-            Pay {formatInr(totals.totalPaise)}
+            {paymentMethod === "CASH" ? "Place order" : `Pay ${formatInr(totals.totalPaise)}`}
           </Button>
         </Card>
       </Box>

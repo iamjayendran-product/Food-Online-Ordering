@@ -30,6 +30,7 @@ test("TC-6.1 a valid order is placed with current menu prices, item snapshots, a
       restaurantSlug: restaurant.slug,
       items: [{ itemId: chicken.id, quantity: 2 }],
       expectedTotalPaise: Math.round(chicken.pricePaise * 2 * 1.05),
+      paymentMethod: "ONLINE",
       simulateSuccess: true,
     },
     mockPaymentProvider,
@@ -60,6 +61,7 @@ test("TC-6.2 a browser-supplied price on a line is rejected with no order create
       restaurantSlug: restaurant.slug,
       items: [{ itemId: chicken.id, quantity: 1, unitPricePaise: 1 }],
       expectedTotalPaise: Math.round(chicken.pricePaise * 1.05),
+      paymentMethod: "ONLINE",
       simulateSuccess: true,
     },
     mockPaymentProvider,
@@ -79,6 +81,7 @@ test("TC-6.3 a failed payment marks the order payment-failed", async () => {
       restaurantSlug: restaurant.slug,
       items: [{ itemId: chicken.id, quantity: 1 }],
       expectedTotalPaise: Math.round(chicken.pricePaise * 1.05),
+      paymentMethod: "ONLINE",
       simulateSuccess: false,
     },
     mockPaymentProvider,
@@ -97,6 +100,7 @@ test("TC-6.4 an item that became unavailable is rejected with no order", async (
       restaurantSlug: restaurant.slug,
       items: [{ itemId: unavailable.id, quantity: 1 }],
       expectedTotalPaise: Math.round(unavailable.pricePaise * 1.05),
+      paymentMethod: "ONLINE",
       simulateSuccess: true,
     },
     mockPaymentProvider,
@@ -120,6 +124,7 @@ test("TC-6.5 items from two restaurants, or an unknown item, are rejected as una
         { itemId: otherItem.id, quantity: 1 },
       ],
       expectedTotalPaise: 0,
+      paymentMethod: "ONLINE",
       simulateSuccess: true,
     },
     mockPaymentProvider,
@@ -132,6 +137,7 @@ test("TC-6.5 items from two restaurants, or an unknown item, are rejected as una
       restaurantSlug: restaurant.slug,
       items: [{ itemId: "does-not-exist", quantity: 1 }],
       expectedTotalPaise: 0,
+      paymentMethod: "ONLINE",
       simulateSuccess: true,
     },
     mockPaymentProvider,
@@ -149,6 +155,7 @@ test("TC-6.6 a stale total is rejected as a price change, with the current price
       restaurantSlug: restaurant.slug,
       items: [{ itemId: chicken.id, quantity: 1 }],
       expectedTotalPaise: 100,
+      paymentMethod: "ONLINE",
       simulateSuccess: true,
     },
     mockPaymentProvider,
@@ -171,6 +178,7 @@ test("TC-6.7 invalid quantities and an empty basket are rejected as validation e
         restaurantSlug: restaurant.slug,
         items: [{ itemId: chicken.id, quantity }],
         expectedTotalPaise: 0,
+        paymentMethod: "ONLINE",
         simulateSuccess: true,
       },
       mockPaymentProvider,
@@ -180,7 +188,7 @@ test("TC-6.7 invalid quantities and an empty basket are rejected as validation e
 
   const emptyBasket = await placeOrder(
     user.id,
-    { restaurantSlug: restaurant.slug, items: [], expectedTotalPaise: 0, simulateSuccess: true },
+    { restaurantSlug: restaurant.slug, items: [], expectedTotalPaise: 0, paymentMethod: "ONLINE", simulateSuccess: true },
     mockPaymentProvider,
   );
   expect(emptyBasket.status).toBe("VALIDATION_ERROR");
@@ -193,6 +201,7 @@ test("TC-6.9 two successful orders get unique, increasing order numbers", async 
     restaurantSlug: restaurant.slug,
     items: [{ itemId: chicken.id, quantity: 1 }],
     expectedTotalPaise: Math.round(chicken.pricePaise * 1.05),
+    paymentMethod: "ONLINE",
     simulateSuccess: true,
   };
 
@@ -206,6 +215,32 @@ test("TC-6.9 two successful orders get unique, increasing order numbers", async 
   expect(second.orderNumber).toBeGreaterThan(first.orderNumber);
 });
 
+test("TC-10.3 a cash order is placed outright, with no charge attempted, even when simulateSuccess is false", async () => {
+  const user = await getPriya();
+  const { restaurant, chicken } = await getBiryaniItems();
+
+  const result = await placeOrder(
+    user.id,
+    {
+      restaurantSlug: restaurant.slug,
+      items: [{ itemId: chicken.id, quantity: 1 }],
+      expectedTotalPaise: Math.round(chicken.pricePaise * 1.05),
+      paymentMethod: "CASH",
+      simulateSuccess: false,
+    },
+    mockPaymentProvider,
+  );
+
+  expect(result.status).toBe("PLACED");
+  if (result.status !== "PLACED") return;
+
+  const order = await testDb.order.findUniqueOrThrow({ where: { id: result.orderId } });
+  expect(order.status).toBe("PLACED");
+  expect(order.paymentMethod).toBe("CASH");
+  expect(order.paymentProvider).toBe("cash");
+  expect(order.paymentRef).toBeNull();
+});
+
 test("TC-9.2 a past scheduledFor is rejected as an invalid schedule", async () => {
   const user = await getPriya();
   const { restaurant, chicken } = await getBiryaniItems();
@@ -217,6 +252,7 @@ test("TC-9.2 a past scheduledFor is rejected as an invalid schedule", async () =
       restaurantSlug: restaurant.slug,
       items: [{ itemId: chicken.id, quantity: 1 }],
       expectedTotalPaise: Math.round(chicken.pricePaise * 1.05),
+      paymentMethod: "ONLINE",
       simulateSuccess: true,
       scheduledFor: new Date(Date.now() - 60_000).toISOString(),
     },
@@ -234,6 +270,7 @@ test("TC-9.3 a scheduledFor outside the pickup window, or more than 7 days out, 
     restaurantSlug: restaurant.slug,
     items: [{ itemId: chicken.id, quantity: 1 }],
     expectedTotalPaise: Math.round(chicken.pricePaise * 1.05),
+    paymentMethod: "ONLINE",
     simulateSuccess: true,
   };
 

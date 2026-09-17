@@ -19,7 +19,10 @@ export const placeOrderInputSchema = z
     restaurantSlug: z.string().min(1),
     items: z.array(orderLineInputSchema).min(1),
     expectedTotalPaise: z.number().int().nonnegative(),
-    simulateSuccess: z.boolean(),
+    paymentMethod: z.enum(["CASH", "ONLINE"]),
+    // Only meaningful (and only read) when paymentMethod is "ONLINE" — cash
+    // never attempts a charge, so there's no outcome to simulate.
+    simulateSuccess: z.boolean().optional(),
     // Absent/undefined = ASAP pickup. Structural validity only here — the
     // pickup-window business rule (future, within 7 days, 9am-10pm IST) is
     // checked separately so it can return its own INVALID_SCHEDULE status.
@@ -111,6 +114,37 @@ export async function placeOrder(
     };
   }
 
+  const orderItemsData = input.items.map((line) => {
+    const item = menuItemsById.get(line.itemId)!;
+    return {
+      menuItemId: item.id,
+      name: item.name,
+      unitPricePaise: item.pricePaise,
+      quantity: line.quantity,
+      lineTotalPaise: item.pricePaise * line.quantity,
+    };
+  });
+
+  // Cash never attempts a charge — the customer pays at the counter, so the
+  // order is placed outright with no PENDING_PAYMENT step.
+  if (input.paymentMethod === "CASH") {
+    const order = await db.order.create({
+      data: {
+        userId,
+        restaurantId: restaurant.id,
+        status: "PLACED",
+        subtotalPaise,
+        gstPaise,
+        totalPaise,
+        paymentProvider: "cash",
+        paymentMethod: "CASH",
+        scheduledFor: input.scheduledFor,
+        items: { create: orderItemsData },
+      },
+    });
+    return { status: "PLACED", orderId: order.id, orderNumber: order.orderNumber };
+  }
+
   const order = await db.$transaction((tx) =>
     tx.order.create({
       data: {
@@ -121,26 +155,19 @@ export async function placeOrder(
         gstPaise,
         totalPaise,
         paymentProvider: provider.name,
+        paymentMethod: "ONLINE",
         scheduledFor: input.scheduledFor,
-        items: {
-          create: input.items.map((line) => {
-            const item = menuItemsById.get(line.itemId)!;
-            return {
-              menuItemId: item.id,
-              name: item.name,
-              unitPricePaise: item.pricePaise,
-              quantity: line.quantity,
-              lineTotalPaise: item.pricePaise * line.quantity,
-            };
-          }),
-        },
+        items: { create: orderItemsData },
       },
     }),
   );
 
   // Charging happens outside the transaction — the order row (and its price
   // snapshot) must exist before we ever call out to a payment provider.
-  const paymentResult = await provider.charge({ amountPaise: totalPaise, simulateSuccess: input.simulateSuccess });
+  const paymentResult = await provider.charge({
+    amountPaise: totalPaise,
+    simulateSuccess: input.simulateSuccess ?? true,
+  });
 
   if (!paymentResult.success) {
     await db.order.update({ where: { id: order.id }, data: { status: "PAYMENT_FAILED" } });

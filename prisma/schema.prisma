@@ -107,9 +107,14 @@ enum OrderStatus {
   PLACED
 }
 
+enum PaymentMethod {
+  CASH
+  ONLINE
+}
+
 model Order {
-  id              String      @id @default(cuid())
-  orderNumber     Int         @unique @default(autoincrement())
+  id              String        @id @default(cuid())
+  orderNumber     Int           @unique @default(autoincrement())
   userId          String
   restaurantId    String
   status          OrderStatus
@@ -117,10 +122,11 @@ model Order {
   gstPaise        Int
   totalPaise      Int
   paymentProvider String
+  paymentMethod   PaymentMethod
   paymentRef      String?
   // null = ASAP pickup (the only behavior before pre-order scheduling existed).
   scheduledFor    DateTime?
-  createdAt       DateTime    @default(now())
+  createdAt       DateTime      @default(now())
 
   user       User        @relation(fields: [userId], references: [id])
   restaurant Restaurant  @relation(fields: [restaurantId], references: [id])

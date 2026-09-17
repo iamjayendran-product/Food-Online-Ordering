@@ -47,7 +47,7 @@ test("TC-6.6 a tampered basket price is corrected with a notice before payment",
   }, BASKET_STORAGE_KEY);
 
   await page.goto("/checkout");
-  await page.getByRole("button", { name: /^Pay/ }).click();
+  await page.getByRole("button", { name: /^Pay ₹/ }).click();
 
   await expect(page.getByText(/Prices changed since you added these items/)).toBeVisible();
   await expect(page.getByText("Total: ₹273")).toBeVisible();
@@ -112,7 +112,7 @@ test("TC-6.12 the confirmation page shows order details and the header basket co
   await expect(page.getByRole("heading", { name: "Dindigul Thalappakatti" })).toBeVisible();
   await expect(page.getByText("Habibullah Road, T Nagar, Chennai")).toBeVisible();
   await expect(page.getByText("Seeraga Samba Chicken Biryani")).toBeVisible();
-  await expect(page.getByText("Payment: Paid (simulated)")).toBeVisible();
+  await expect(page.getByText("Payment: Paid online (simulated)")).toBeVisible();
   await expect(page.getByRole("link", { name: "Basket", exact: true })).toBeVisible();
 });
 
