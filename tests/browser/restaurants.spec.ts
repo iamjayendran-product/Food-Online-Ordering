@@ -8,7 +8,11 @@ test("TC-2.1 the home page lists all restaurants alphabetically with cuisine tag
   const names = await headings.allTextContents();
   expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)));
 
-  await expect(page.getByText("Biryani", { exact: true })).toBeVisible();
+  // Scoped to the card: the discovery page's category browse chips (F14)
+  // also render a "Biryani" chip, so an unscoped match would be ambiguous.
+  await expect(
+    page.getByRole("link", { name: /Dindigul Thalappakatti/ }).getByText("Biryani", { exact: true }),
+  ).toBeVisible();
 });
 
 test("TC-2.4 a search with no results shows an empty state with a clear link", async ({ page }) => {
@@ -41,8 +45,8 @@ test("TC-2.5 the search term survives a reload; Back returns to the unfiltered l
 
 test("TC-2.7 a restaurant without an image shows an initials placeholder, not a broken image", async ({ page }) => {
   await page.goto("/");
-  const card = page.getByRole("link", { name: /The Grand Sweets and Snacks/ });
+  const card = page.getByRole("link", { name: /Pakwan/ });
 
-  await expect(card.getByRole("img", { name: "The Grand Sweets and Snacks" })).toBeVisible();
+  await expect(card.getByRole("img", { name: "Pakwan" })).toBeVisible();
   await expect(card.locator("img")).toHaveCount(0);
 });

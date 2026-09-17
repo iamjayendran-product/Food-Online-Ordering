@@ -176,7 +176,7 @@ Presentation over the existing order flow. Nothing here changes pricing, availab
 Presentation over the existing discovery flow. Nothing here changes search results, pricing or availability.
 
 - The search field's placeholder reads **"Search restaurants, items, cuisines..."**. Search still matches restaurant name only — the wording sets expectations for a future search expansion, not a behavior change here. [TC-8.1]
-- Below the search field, a **campaigns marquee** auto-scrolls promotional headlines from a subset of restaurants. It pauses while hovered or focused. This is decorative — it doesn't affect pricing or availability. [TC-8.2, TC-8.4]
+- ~~Below the search field, a **campaigns marquee** auto-scrolls promotional headlines from a subset of restaurants. It pauses while hovered or focused.~~ **Superseded by P0-11 (2026-09-17):** the marquee was replaced by the promotional banner carousel, and the search field moved below it.
 - **Given** a store card carousel with several photos, **when** the customer hovers over it, **then** it automatically advances through the photos without a click. The existing click/keyboard arrows still work for touch and non-hover access. [TC-8.3]
 - **Given** a restaurant with photos, **when** its menu page loads, **then** a full-width hero banner above the name/rating/address block auto-advances through those photos. A restaurant with no photos shows no hero banner. [TC-8.5, TC-8.6]
 
@@ -200,6 +200,17 @@ Checkout offers a real choice of how the customer pays; the confirmation page ad
 - The confirmation page shows a **simulated kitchen view** — an animated illustration, not a real feed — labelled "Simulated live view — `<restaurant name>`'s kitchen" with a "LIVE" badge. [TC-10.5]
 
 *Technical considerations:* `Order.paymentMethod` (`CASH` | `ONLINE`) is a real field, not a copy-only change — a cash order is created with `status: "PLACED"` directly, skipping the `PENDING_PAYMENT` step and the payment provider entirely, since there is nothing to charge. The kitchen view has no backing data or camera; it's a client-side animation that takes only the restaurant's name.
+
+#### P0-11: Discovery page redesign — promotional carousel, category browse, full photo coverage (F14)
+Replaces the discovery page's static banner and campaigns marquee with a promotional carousel, adds a category browse strip, and gives every restaurant a real photo.
+
+- The discovery hero is a full-width **promotional carousel** that auto-advances and pauses while hovered or focused. Its first slide reads **"Your first order in Foodlicious is 50% off"** in vibrant, animated styling; the remaining slides are the seeded campaigns, each showing a photo and its headline. [TC-11.1, TC-11.5]
+- **Given** a campaign slide, **when** the customer clicks it, **then** they land on that campaign's restaurant. [TC-11.2]
+- The search field sits **below the carousel**, unchanged otherwise (same accessible name and placeholder). [TC-11.3]
+- Below the search field, a row of **category chips** (e.g. Biryani, Tiffin) lets a customer browse by cuisine, replacing the marquee's old position. **Given** a category chip, **when** clicked, **then** the restaurant grid filters to restaurants tagged with that cuisine; clicking the same chip again clears the filter; the filter combines with an active name search. [TC-11.6, TC-11.7, TC-11.8, TC-11.9]
+- Every restaurant on discovery shows a **real photo**. No restaurant is deliberately photo-less anymore except the one card that still exercises the no-photo fallback rendering path. [TC-11.4]
+
+*Technical considerations:* no new schema — this reuses `Campaign.imageUrl` (seeded but previously unused by the marquee) and the existing `Restaurant.cuisines` free-text tags (also already shown as chips on each card). `listRestaurants()` gains an optional cuisine filter alongside its existing name search. Pakwan is now the restaurant seeded with no photos, taking over that role from The Grand Sweets and Snacks, which now has real photos like every other restaurant.
 
 ### Nice-to-Have (P1)
 **None committed for v1.** The scope is deliberately tight. Anything proposed for v1 enters here only with a matching removal from P0 or an explicit timeline extension.
@@ -399,9 +410,7 @@ All test cases are automated with Playwright. **B** = browser test; **L** = logi
 | ID | Type | Scenario | Expected |
 |---|---|---|---|
 | TC-8.1 | B | Home page search field | Placeholder reads "Search restaurants, items, cuisines..." |
-| TC-8.2 | B | Home page below the search field | A campaigns marquee is present with at least one seeded headline |
 | TC-8.3 | B | Hovering a card's carousel | The photo advances without a click, page stays put |
-| TC-8.4 | B | Hovering the campaigns marquee | Its scroll animation pauses |
 | TC-8.5 | B | Opening a restaurant with photos | A hero banner above the name/rating/address block auto-advances |
 | TC-8.6 | B | Opening a restaurant with no photos | No hero banner element, no broken image |
 
@@ -421,6 +430,19 @@ All test cases are automated with Playwright. **B** = browser test; **L** = logi
 | TC-10.3 | L | `placeOrder` with `paymentMethod: "CASH"` and `simulateSuccess: false` | Order placed outright (`PLACED`), no payment provider called, `paymentRef` null |
 | TC-10.4 | B | Toggle between cash and online | Pay button label and online sub-choice show/hide accordingly; failure path under online still works |
 | TC-10.5 | B | View confirmation | "Kitchen view" heading, "LIVE" badge, "Simulated live view — `<restaurant>`'s kitchen" label |
+
+### TC-11: Discovery page redesign (P0-11)
+| ID | Type | Scenario | Expected |
+|---|---|---|---|
+| TC-11.1 | B | Open `/` | Banner carousel's first slide reads "Your first order in Foodlicious is 50% off" |
+| TC-11.2 | B | Click a campaign slide | Navigates to that campaign's restaurant |
+| TC-11.3 | B | Home page layout | Search field sits below the banner carousel |
+| TC-11.4 | B | The Grand Sweets and Snacks card | Shows a real photo, not the initials placeholder |
+| TC-11.5 | B | Banner carousel over time, then hover | Auto-advances off the promo slide; hovering the current slide stops further advance |
+| TC-11.6 | B | Click the "Tiffin" category chip | Grid filters to the 3 restaurants tagged Tiffin |
+| TC-11.7 | B | Click the active category chip again | Filter clears; all 10 restaurants shown |
+| TC-11.8 | B | Search "thalappakatti", then click "Biryani" | Both filters apply together; only Dindigul Thalappakatti shown |
+| TC-11.9 | L | `listRestaurants` with a cuisine filter, alone and combined with a name search | Narrows correctly; combines as AND; no match returns empty |
 
 ### TC-J: End-to-end journey (Goal 1)
 | ID | Type | Scenario | Expected |

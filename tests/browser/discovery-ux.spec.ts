@@ -8,11 +8,6 @@ test("TC-8.1 the search field's placeholder invites searching items and cuisines
   );
 });
 
-test("TC-8.2 the home page shows a campaigns marquee with a seeded headline", async ({ page }) => {
-  await page.goto("/");
-  await expect(page.getByRole("link", { name: "20% off today at Ratna Cafe" }).first()).toBeVisible();
-});
-
 test("TC-8.3 hovering a card carousel advances its photo without a click", async ({ page }) => {
   // A fake clock makes the auto-advance deterministic: waiting a real
   // wall-clock margin around the interval is racy under a loaded machine
@@ -32,22 +27,6 @@ test("TC-8.3 hovering a card carousel advances its photo without a click", async
 
   await expect(card.getByRole("img", { name: "Dindigul Thalappakatti photo 2 of 3" })).toBeVisible();
   await expect(page).toHaveURL("/");
-});
-
-test("TC-8.4 the campaigns marquee pauses its scroll animation on hover", async ({ page }) => {
-  await page.goto("/");
-  const track = page.getByRole("link", { name: "20% off today at Ratna Cafe" }).first().locator("..");
-
-  const playingState = await track.evaluate((el) => getComputedStyle(el).animationPlayState);
-  expect(playingState).toBe("running");
-
-  // force: true — the track is continuously translating via CSS animation,
-  // so Playwright's actionability check (which waits for the target to be
-  // visually stable) would otherwise never resolve. This is a hover-state
-  // assertion, not a click, so skipping that wait is safe here.
-  await track.hover({ force: true });
-  const pausedState = await track.evaluate((el) => getComputedStyle(el).animationPlayState);
-  expect(pausedState).toBe("paused");
 });
 
 test("TC-8.5 a restaurant with photos shows an auto-advancing hero banner", async ({ page }) => {
@@ -72,7 +51,7 @@ test("TC-8.5 a restaurant with photos shows an auto-advancing hero banner", asyn
 });
 
 test("TC-8.6 a restaurant with no photos shows no hero banner", async ({ page }) => {
-  await page.goto("/restaurants/the-grand-sweets-and-snacks");
+  await page.goto("/restaurants/pakwan");
 
   await expect(page.getByRole("img", { name: /banner photo/ })).toHaveCount(0);
 });

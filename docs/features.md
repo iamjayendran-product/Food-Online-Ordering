@@ -27,6 +27,7 @@ This is the single place to see what's being built, in what order, and where eac
 | F11 | Restaurant hero banner + menu-layout audit | P0-8 | F3, F7 | TC-8.5–8.6 (2) | **Done** | PASS (round 1/1, reviewed with F10) | 2026-09-16 |
 | F12 | Pre-order scheduling | P0-9 | F5, F6 | TC-9.1–9.4 (4) | **Done** | PASS (round 2/2) | 2026-09-16 |
 | F13 | Payment method (cash/online) redesign + simulated kitchen view | P0-10 | F5, F6 | TC-10.1–10.5 (5) | **Done** | PASS (round 1/1) | 2026-09-17 |
+| F14 | Discovery page redesign: promotional carousel, category browse, full photo coverage | P0-11 | F2, F7, F10 | TC-11.1–11.9 (9) | **Done** | PASS (round 1/1) | 2026-09-17 |
 
 **Build order:** F0 → F1 → F2 → F3 → F4 → F5 → F6, one feature per cycle. F7, the Material UI redesign, and the Foodlicious relaunch (F8 onward) followed as owner-requested work after v1 shipped — see `docs/superpowers/specs/2026-09-16-foodlicious-relaunch-design.md` and its plan.
 
@@ -274,6 +275,7 @@ Reviewer: `PASS` on the first round for both F5 and F6 — no additional defects
 | 2026-09-16 | F10 (search copy, campaigns marquee, hover carousel) + F11 (restaurant hero banner reusing `Restaurant.images`; menu-layout audit found nothing to change) built together as new PRD requirement P0-8. Reviewer PASS, round 1. Committed (commit 4a9aa7d). |
 | 2026-09-16 | F12 (pre-order scheduling) built as new PRD requirement P0-9. Reviewer round 1 FIXED a real timezone bug: the scheduled pickup instant was built in the browser's local timezone instead of IST, invisible in this session's tests only because the dev machine itself is IST. Round 2 PASS. Committed (commit 4bc645e). |
 | 2026-09-17 | F13 (payment method redesign + simulated kitchen view) built as new PRD requirement P0-10: checkout now offers "Pay in cash" (places the order outright, no charge attempted) and "Pay later online" (unchanged simulated success/failure flow); the confirmation page adds an animated "Kitchen view" card with a LIVE badge. Fixed a self-caught test regression: the new "Pay in cash"/"Pay later online" buttons broke pre-existing tests' ambiguous `/^Pay/` button matcher, and the new kitchen-view test's `getByText("LIVE")` matched the label text too (case-insensitive substring) until scoped to an exact match. Two full-suite runs surfaced unrelated pre-existing flakes (TC-8.3, TC-6.4, TC-6.6, TC-2.1) that passed individually in isolation — not regressions. Reviewer PASS, round 1. |
+| 2026-09-17 | F14 (discovery page redesign) built as new PRD requirement P0-11: the campaigns marquee and static "Order ahead" hero were replaced by an auto-advancing promotional carousel (first slide: "Your first order in Foodlicious is 50% off"; remaining slides are the seeded campaigns, now with real photos via `Campaign.imageUrl`, which existed since F10 but was never populated); the search bar moved below the carousel; a new cuisine category-chip strip (reusing `Restaurant.cuisines`) filters the grid; every restaurant now has real photos, with Pakwan taking over the "deliberately photo-less" test role from The Grand Sweets and Snacks. Caught and fixed two of my own test-authoring bugs before review: a mismatched cuisine assumption (Adyar Ananda Bhavan isn't tagged "Tiffin") and a carousel auto-advance race against Playwright's own default assertion timeout, fixed by freezing the fake clock before navigation rather than after. A full-suite run hit TC-7.5 as a pre-existing unrelated flake — passed cleanly in isolation. Reviewer PASS, round 1. |
 
 ---
 
@@ -348,3 +350,35 @@ Owner request: rename the app to **FoodStation**, add a photo carousel per store
 - **Round 2 — PASS** from a fresh reviewer: no defects found, `lint`/`tsc`/`tc:check`/`build`/73 tests all clean, no hydration errors in the webserver log.
 
 This is the same hydration bug the owner independently reproduced and reported live during round 1's review — confirmed identical stack trace and fix.
+
+---
+
+## F14: Discovery page redesign (2026-09-17)
+
+Owner request: remove the campaigns marquee, replace the "Order ahead. Skip the queue." banner with an auto-rotating carousel of dishes/offers/campaigns whose first slide is a vibrant "Your first order in Foodlicious is 50% off" promo, move the search bar below it, give every store card a real photo (The Grand Sweets and Snacks was the one deliberately photo-less card), and add cuisine category chips (Biryani, Tiffin, ...) in the marquee's old spot. Requirements are PRD **P0-11**; test cases are Appendix B **TC-11.1–TC-11.9**.
+
+**Decisions taken with the owner (via brainstorming, bounded path)**
+- The photo-less-fallback test coverage moves to **Pakwan** instead of staying on Grand Sweets, since "all store cards" have images now.
+- Category chips **filter the grid** (not decorative-only), reusing the existing `Restaurant.cuisines` tags — no new schema.
+- `Campaign.imageUrl` (in the schema since F10 but never populated, since the old marquee was text-only) is now seeded with real, checked photo URLs.
+- The carousel auto-advances, pauses on hover/focus, and campaign slides are clickable through to their restaurant — matching the interaction pattern already used by `RestaurantCarousel` (F7) and `RestaurantHeroBanner` (F11).
+
+**What changed**
+- New `src/components/banner-carousel.tsx` (client): replaces the static hero + `CampaignMarquee`. Slide 0 is the fixed, non-linking promo slide (animated gradient across Tomato/Sunshine/Kiwi, pulsing headline). Slides 1-N are the seeded campaigns (photo + headline, linking to `/restaurants/<slug>`). `campaign-marquee.tsx` is deleted.
+- New `src/components/cuisine-filter-chips.tsx` (server component — plain links, no client JS needed): renders the distinct cuisine tags as clickable chips inside `<nav aria-label="Browse by category">`. Clicking sets `?cuisine=`, clicking the active chip again clears it, and it composes with `?q=` via a hidden form field.
+- `src/lib/restaurants.ts`: `listRestaurants()` gained an optional `cuisine` filter (`cuisines: { has }`, ANDed with the name search); new `listCuisines()` returns the deduped, sorted set of cuisine tags across all restaurants.
+- `src/lib/campaigns.ts`: `listCampaigns()` now selects `imageUrl`.
+- `src/components/next-link-mui.tsx`: added `LinkChip` (the same pre-bound-`NextLink` pattern as `LinkButton`/`TextLink`, needed because a Server Component can't pass `component={NextLink}` directly).
+- `prisma/seed.ts`: Grand Sweets gets `images: [PHOTO.sweets, PHOTO.dessert, PHOTO.bakery]` (URLs checked for HTTP 200 before use, per project convention); Pakwan becomes `images: []` with the "deliberately photo-less" comment moved to it; all 5 seeded campaigns gained a checked `imageUrl`. No schema/migration change — `Campaign.imageUrl` already existed.
+- `src/app/(customer)/page.tsx`: restructured to h1 → `BannerCarousel` → search form (now its own section, no longer nested in the gradient hero) → `CuisineFilterChips` → result count → grid. The Search button switched from `color="secondary"` to `color="primary"`, since it's no longer sitting on a tomato-gradient card where white-on-tomato was needed for contrast.
+
+**Test changes**
+- TC-8.2 and TC-8.4 (marquee-specific) removed from the PRD and their tests deleted — superseded by TC-11.1/11.2/11.5 covering the same ground on the new carousel.
+- TC-8.6 (restaurant detail page, no-photo hero banner) and TC-2.7 (discovery card no-photo fallback) retargeted from Grand Sweets to **Pakwan**.
+- TC-2.1's unscoped `getByText("Biryani", { exact: true })` became ambiguous once the new category-chip strip also renders a "Biryani" chip — scoped to Dindigul Thalappakatti's own card to disambiguate, the same kind of fix F7 needed for `#menu-categories`.
+- New `tests/browser/discovery-redesign.spec.ts` (TC-11.1–11.8) and one new logic test (TC-11.9) in `tests/logic/restaurants.spec.ts`.
+- **Trap avoided, not hit:** campaign slide order is driven by `restaurantId` (a cuid) via `listCampaigns()`'s `orderBy: [{ restaurantId: "asc" }, ...]`, not by seed insertion order — a test assuming "the second slide is always Ratna Cafe" would be flaky. TC-11.2 and TC-11.5 instead search across all five known headlines / click "Next" until the target is found.
+
+**Verification:** `lint`/`tsc`/`tc:check`/`next build` clean; full Playwright suite 95/95 (one full-suite run also hit TC-7.5, a pre-existing unrelated flake — passed cleanly in isolation both times).
+
+**Independent review (2026-09-17): PASS, round 1.** No defects found.

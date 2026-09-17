@@ -22,11 +22,14 @@ function escapeLikePattern(value: string): string {
   return value.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_");
 }
 
-export async function listRestaurants(query?: string): Promise<RestaurantCard[]> {
+export async function listRestaurants(query?: string, cuisine?: string): Promise<RestaurantCard[]> {
   const trimmed = query?.trim();
 
   const rows = await db.restaurant.findMany({
-    where: trimmed ? { name: { contains: escapeLikePattern(trimmed), mode: "insensitive" } } : undefined,
+    where: {
+      ...(trimmed ? { name: { contains: escapeLikePattern(trimmed), mode: "insensitive" } } : {}),
+      ...(cuisine ? { cuisines: { has: cuisine } } : {}),
+    },
     orderBy: { name: "asc" },
     select: {
       id: true,
@@ -45,6 +48,15 @@ export async function listRestaurants(query?: string): Promise<RestaurantCard[]>
     ...restaurant,
     isPureVeg: items.length > 0 && items.every((item) => item.isVeg),
   }));
+}
+
+// The distinct set of cuisine tags across every restaurant, for the
+// discovery page's category browse chips. Small, fixed-size dataset, so
+// deduping in JS is simpler than a raw unnest query.
+export async function listCuisines(): Promise<string[]> {
+  const rows = await db.restaurant.findMany({ select: { cuisines: true } });
+  const cuisines = new Set(rows.flatMap((row) => row.cuisines));
+  return [...cuisines].sort((a, b) => a.localeCompare(b));
 }
 
 export type MenuItemDTO = {

@@ -21,3 +21,18 @@ test("TC-2.6 special characters are matched literally, not as wildcards", async 
   await expect(listRestaurants("_")).resolves.toEqual([]);
   await expect(listRestaurants("'")).resolves.toEqual([]);
 });
+
+test("TC-11.9 filtering by cuisine narrows results and combines with a name search", async () => {
+  const tiffin = await listRestaurants(undefined, "Tiffin");
+  expect(tiffin.map((r) => r.name).sort()).toEqual([
+    "Hotel Saravana Bhavan",
+    "Murugan Idli Shop",
+    "Ratna Cafe",
+  ]);
+
+  const combined = await listRestaurants("ratna", "Tiffin");
+  expect(combined.map((r) => r.name)).toEqual(["Ratna Cafe"]);
+
+  const noMatch = await listRestaurants("ratna", "Barbecue");
+  expect(noMatch).toEqual([]);
+});

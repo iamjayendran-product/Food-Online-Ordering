@@ -222,9 +222,7 @@ const restaurants: SeedRestaurant[] = [
     name: "The Grand Sweets and Snacks",
     cuisines: ["Sweets", "Snacks"],
     address: "14th Avenue, Harrington Road area, T Nagar, Chennai",
-    // Deliberately photo-less: the discovery card must fall back to its
-    // initials tile and render no <img> element at all.
-    images: [],
+    images: [PHOTO.sweets, PHOTO.dessert, PHOTO.bakery],
     pickupMinutes: 9,
     ratingAvg: 4.5,
     reviewCount: 402,
@@ -418,7 +416,9 @@ const restaurants: SeedRestaurant[] = [
     name: "Pakwan",
     cuisines: ["North Indian", "Chinese"],
     address: "Panagal Park, T Nagar, Chennai",
-    images: [PHOTO.curryAlt, PHOTO.bakery, PHOTO.coldDrink],
+    // Deliberately photo-less: the discovery card and restaurant page must
+    // fall back to their placeholders and render no <img> element at all.
+    images: [],
     pickupMinutes: 18,
     ratingAvg: 4.2,
     reviewCount: 356,
@@ -495,17 +495,18 @@ const restaurants: SeedRestaurant[] = [
 type SeedCampaign = {
   restaurantSlug: string;
   headline: string;
+  imageUrl: string;
   sortOrder: number;
 };
 
-// Decorative promo text for the discovery-page marquee, not a real
+// Decorative promo text for the discovery-page banner carousel, not a real
 // promotions system: doesn't affect pricing or availability.
 const campaigns: SeedCampaign[] = [
-  { restaurantSlug: "ratna-cafe", headline: "20% off today at Ratna Cafe", sortOrder: 0 },
-  { restaurantSlug: "adyar-ananda-bhavan", headline: "New: Filter coffee combo at A2B", sortOrder: 1 },
-  { restaurantSlug: "absolute-barbecues", headline: "Weekend grill buffet special", sortOrder: 2 },
-  { restaurantSlug: "the-grand-sweets-and-snacks", headline: "Order ahead: festive sweet boxes", sortOrder: 3 },
-  { restaurantSlug: "sin-and-tonic", headline: "Happy hour snacks, 15% off", sortOrder: 4 },
+  { restaurantSlug: "ratna-cafe", headline: "20% off today at Ratna Cafe", imageUrl: PHOTO.tiffin, sortOrder: 0 },
+  { restaurantSlug: "adyar-ananda-bhavan", headline: "New: Filter coffee combo at A2B", imageUrl: PHOTO.coffee, sortOrder: 1 },
+  { restaurantSlug: "absolute-barbecues", headline: "Weekend grill buffet special", imageUrl: PHOTO.grill, sortOrder: 2 },
+  { restaurantSlug: "the-grand-sweets-and-snacks", headline: "Order ahead: festive sweet boxes", imageUrl: PHOTO.dessert, sortOrder: 3 },
+  { restaurantSlug: "sin-and-tonic", headline: "Happy hour snacks, 15% off", imageUrl: PHOTO.chaat, sortOrder: 4 },
 ];
 
 type SeedCustomer = {
@@ -596,8 +597,13 @@ async function seedCampaign(campaign: SeedCampaign) {
   });
   await prisma.campaign.upsert({
     where: { restaurantId_headline: { restaurantId: restaurant.id, headline: campaign.headline } },
-    create: { restaurantId: restaurant.id, headline: campaign.headline, sortOrder: campaign.sortOrder },
-    update: { sortOrder: campaign.sortOrder },
+    create: {
+      restaurantId: restaurant.id,
+      headline: campaign.headline,
+      imageUrl: campaign.imageUrl,
+      sortOrder: campaign.sortOrder,
+    },
+    update: { imageUrl: campaign.imageUrl, sortOrder: campaign.sortOrder },
   });
 }
 

@@ -3,10 +3,12 @@
 import NextLink from "next/link";
 import Button from "@mui/material/Button";
 import CardActionArea from "@mui/material/CardActionArea";
+import Chip from "@mui/material/Chip";
 import MuiLink from "@mui/material/Link";
 import Typography from "@mui/material/Typography";
 import type { ButtonProps } from "@mui/material/Button";
 import type { CardActionAreaProps } from "@mui/material/CardActionArea";
+import type { ChipProps } from "@mui/material/Chip";
 import type { LinkProps } from "@mui/material/Link";
 import type { TypographyProps } from "@mui/material/Typography";
 
@@ -31,4 +33,8 @@ export function LinkCardActionArea(props: CardActionAreaProps<typeof NextLink>) 
 
 export function TextLink(props: LinkProps<typeof NextLink>) {
   return <MuiLink component={NextLink} {...props} />;
+}
+
+export function LinkChip(props: ChipProps<typeof NextLink>) {
+  return <Chip component={NextLink} clickable {...props} />;
 }
