@@ -10,16 +10,15 @@ test("TC-3.1 selecting a restaurant shows its name, cuisines, address and catego
   await expect(page.getByText("Habibullah Road, T Nagar, Chennai")).toBeVisible();
 
   const categoryHeadings = page.getByRole("heading", { level: 2 });
-  await expect(categoryHeadings).toHaveText(["Recommended", "Biryani", "Starters", "Beverages"]);
+  await expect(categoryHeadings).toHaveText(["Biryani", "Starters", "Curries", "Beverages"]);
 });
 
 test("TC-3.2 a menu item shows name, description, price and an accessible veg/non-veg marker", async ({ page }) => {
   await page.goto("/restaurants/dindigul-thalappakatti");
 
-  // Scoped to the dish's own row: it's recommended (so its name also appears
-  // in the shortcut section above) and its price isn't unique on this menu
-  // (Mutton Chukka is also ₹260), so an unscoped match would hit more than
-  // one element either way.
+  // Scoped to the dish's own row: its price isn't unique on this menu
+  // (Mutton Chukka, Naadan Chicken Biryani and Prawn 65 are also ₹260), so
+  // an unscoped text match could hit more than one element.
   const row = page.locator("#menu-categories li", { hasText: "Seeraga Samba Chicken Biryani" });
   await expect(row.getByText("Seeraga Samba Chicken Biryani", { exact: true })).toBeVisible();
   await expect(

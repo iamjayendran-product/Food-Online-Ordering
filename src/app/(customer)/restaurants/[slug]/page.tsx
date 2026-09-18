@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import Box from "@mui/material/Box";
-import Card from "@mui/material/Card";
 import Chip from "@mui/material/Chip";
 import Typography from "@mui/material/Typography";
 import PlaceOutlinedIcon from "@mui/icons-material/PlaceOutlined";
@@ -8,9 +7,13 @@ import ScheduleIcon from "@mui/icons-material/Schedule";
 import { getRestaurantMenu } from "@/lib/restaurants";
 import { MenuItemRow } from "@/components/menu-item-row";
 import { RatingStars } from "@/components/rating-stars";
-import { AddToBasketButton } from "@/components/add-to-basket-button";
 import { RestaurantHeroBanner } from "@/components/restaurant-hero-banner";
-import { formatInr } from "@/lib/format";
+import { brand } from "@/theme";
+
+// Cycled by category index so adjacent categories read as visually distinct
+// sections; all four are already deepened to clear WCAG text contrast on
+// white (see theme.ts).
+const CATEGORY_COLORS = [brand.tomato, brand.forest, brand.kiwi, brand.sunshine];
 
 export default async function RestaurantPage({
   params,
@@ -71,63 +74,6 @@ export default async function RestaurantPage({
         </Box>
       </Box>
 
-      {menu.recommended.length > 0 && (
-        <Box component="section" sx={{ mb: 4 }}>
-          <Typography variant="h2" component="h2" sx={{ mb: 1.5 }}>
-            Recommended
-          </Typography>
-          <Box
-            sx={{
-              display: "flex",
-              gap: 2,
-              overflowX: "auto",
-              pb: 1,
-              "&::-webkit-scrollbar": { display: "none" },
-            }}
-          >
-            {menu.recommended.map((item) => (
-              <Card key={item.id} sx={{ width: 208, flexShrink: 0, overflow: "hidden" }}>
-                {item.imageUrl && (
-                  <Box
-                    component="img"
-                    src={item.imageUrl}
-                    alt=""
-                    sx={{ display: "block", height: 116, width: "100%", objectFit: "cover" }}
-                  />
-                )}
-                <Box sx={{ p: 1.5 }}>
-                  <Typography sx={{ fontWeight: 600, fontSize: "0.95rem" }} noWrap>
-                    {item.name}
-                  </Typography>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      gap: 1,
-                      mt: 1,
-                    }}
-                  >
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                      {formatInr(item.pricePaise)}
-                    </Typography>
-                    <AddToBasketButton
-                      isAvailable={item.isAvailable}
-                      restaurantSlug={menu.slug}
-                      restaurantName={menu.name}
-                      restaurantAddress={menu.address}
-                      itemId={item.id}
-                      name={item.name}
-                      unitPricePaise={item.pricePaise}
-                    />
-                  </Box>
-                </Box>
-              </Card>
-            ))}
-          </Box>
-        </Box>
-      )}
-
       {menu.categories.length > 1 && (
         <Box
           sx={{
@@ -156,12 +102,14 @@ export default async function RestaurantPage({
         </Box>
       )}
 
-      {/* Recommended repeats items that also live in a category below, so the
-          full menu is wrapped in a stable id that tests can scope to. */}
       <Box id="menu-categories" sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
-        {menu.categories.map((category) => (
+        {menu.categories.map((category, index) => (
           <Box component="section" key={category.id} id={`category-${category.id}`}>
-            <Typography variant="h2" component="h2" sx={{ mb: 0.5 }}>
+            <Typography
+              variant="h2"
+              component="h2"
+              sx={{ mb: 0.5, color: CATEGORY_COLORS[index % CATEGORY_COLORS.length] }}
+            >
               {category.name}
             </Typography>
             <Box component="ul" sx={{ listStyle: "none", m: 0, p: 0 }}>

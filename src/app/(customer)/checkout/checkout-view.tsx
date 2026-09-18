@@ -7,11 +7,7 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import Divider from "@mui/material/Divider";
-import FormControl from "@mui/material/FormControl";
-import FormControlLabel from "@mui/material/FormControlLabel";
 import FormLabel from "@mui/material/FormLabel";
-import Radio from "@mui/material/Radio";
-import RadioGroup from "@mui/material/RadioGroup";
 import TextField from "@mui/material/TextField";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
@@ -37,7 +33,6 @@ export function CheckoutView() {
   const router = useRouter();
   const { basket, hydrated, remove, clear, refreshBasket } = useBasket();
   const [paymentMethod, setPaymentMethod] = useState<"CASH" | "ONLINE">("ONLINE");
-  const [paymentChoice, setPaymentChoice] = useState<"success" | "failure">("success");
   const [scheduleMode, setScheduleMode] = useState<"asap" | "schedule">("asap");
   const [scheduleDate, setScheduleDate] = useState("");
   const [scheduleTime, setScheduleTime] = useState("");
@@ -107,7 +102,11 @@ export function CheckoutView() {
       items: basket.lines.map((line) => ({ itemId: line.itemId, quantity: line.quantity })),
       expectedTotalPaise: totals.totalPaise,
       paymentMethod,
-      simulateSuccess: paymentMethod === "ONLINE" ? paymentChoice === "success" : undefined,
+      // The checkout UI no longer exposes a way to simulate a failed
+      // payment; online payment always succeeds. `PAYMENT_FAILED` and the
+      // recovery path it enables still exist in placeOrder/PaymentProvider
+      // for a future real gateway — see TC-6.3.
+      simulateSuccess: paymentMethod === "ONLINE" ? true : undefined,
       scheduledFor,
     });
 
@@ -315,28 +314,6 @@ export function CheckoutView() {
                 Pay later online
               </ToggleButton>
             </ToggleButtonGroup>
-
-            {paymentMethod === "ONLINE" && (
-              <FormControl sx={{ mt: 2 }}>
-                <RadioGroup
-                  value={paymentChoice}
-                  onChange={(event) =>
-                    setPaymentChoice(event.target.value === "failure" ? "failure" : "success")
-                  }
-                >
-                  <FormControlLabel
-                    value="success"
-                    control={<Radio size="small" />}
-                    label="Simulate successful payment"
-                  />
-                  <FormControlLabel
-                    value="failure"
-                    control={<Radio size="small" />}
-                    label="Simulate failed payment"
-                  />
-                </RadioGroup>
-              </FormControl>
-            )}
           </Card>
         </Box>
 

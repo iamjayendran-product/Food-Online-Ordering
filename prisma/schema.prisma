@@ -65,7 +65,6 @@ model MenuItem {
   isVeg         Boolean
   isAvailable   Boolean @default(true)
   imageUrl      String?
-  isRecommended Boolean @default(false)
   sortOrder     Int
 
   restaurant Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)

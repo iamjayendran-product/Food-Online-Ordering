@@ -16,7 +16,6 @@ test("TC-10.1 checkout offers cash and online payment, with online selected by d
 
   await expect(page.getByRole("button", { name: "Pay in cash" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Pay later online", pressed: true })).toBeVisible();
-  await expect(page.getByLabel("Simulate successful payment")).toBeVisible();
   await expect(page.getByRole("button", { name: "Pay ₹273" })).toBeVisible();
 });
 
@@ -33,24 +32,16 @@ test("TC-10.2 paying in cash places the order with no charge and shows a cash pi
   await expect(page.getByText("Payment: Pay ₹273 in cash at pickup")).toBeVisible();
 });
 
-test("TC-10.4 switching payment method updates the pay button and the online sub-choice", async ({ page }) => {
+test("TC-10.4 switching payment method updates the pay button label", async ({ page }) => {
   await addChickenBiryaniToBasket(page);
   await loginAs(page, "priya@example.com");
   await page.goto("/checkout");
 
   await page.getByRole("button", { name: "Pay in cash" }).click();
   await expect(page.getByRole("button", { name: "Place order" })).toBeVisible();
-  await expect(page.getByLabel("Simulate successful payment")).toHaveCount(0);
 
   await page.getByRole("button", { name: "Pay later online" }).click();
   await expect(page.getByRole("button", { name: "Pay ₹273" })).toBeVisible();
-  await expect(page.getByLabel("Simulate successful payment")).toBeVisible();
-
-  await page.getByLabel("Simulate failed payment").check();
-  await page.getByRole("button", { name: "Pay ₹273" }).click();
-  await expect(
-    page.getByText("Payment failed. You have not been charged. Please try again."),
-  ).toBeVisible();
 });
 
 test("TC-10.5 the confirmation page shows a simulated kitchen view with a LIVE badge", async ({ page }) => {

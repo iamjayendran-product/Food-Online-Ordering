@@ -11,7 +11,17 @@ import { brand } from "@/theme";
 import type { CampaignItem } from "@/lib/campaigns";
 
 const BANNER_HEIGHT = 260;
-const AUTO_ADVANCE_MS = 5000;
+const AUTO_ADVANCE_MS = 3000;
+
+// A handful of simple, brand-coloured doodle shapes that float and rotate
+// gently behind the promo text — purely decorative, so plain positioned
+// circles/rings rather than an icon set or image asset.
+const DOODLES = [
+  { top: "12%", left: "68%", size: 46, delay: "0s", duration: "5.5s", opacity: 0.35 },
+  { top: "62%", left: "82%", size: 30, delay: "0.6s", duration: "4.5s", opacity: 0.3 },
+  { top: "70%", left: "58%", size: 20, delay: "1.2s", duration: "6s", opacity: 0.4 },
+  { top: "20%", left: "88%", size: 16, delay: "0.3s", duration: "4s", opacity: 0.45 },
+];
 
 type Slide =
   | { kind: "promo" }
@@ -63,6 +73,7 @@ export function BannerCarousel({ campaigns }: { campaigns: CampaignItem[] }) {
       {slide.kind === "promo" ? (
         <Box
           sx={{
+            position: "relative",
             height: "100%",
             display: "flex",
             flexDirection: "column",
@@ -83,6 +94,28 @@ export function BannerCarousel({ campaigns }: { campaigns: CampaignItem[] }) {
             },
           }}
         >
+          {DOODLES.map((doodle, index) => (
+            <Box
+              key={index}
+              aria-hidden
+              sx={{
+                position: "absolute",
+                top: doodle.top,
+                left: doodle.left,
+                width: doodle.size,
+                height: doodle.size,
+                borderRadius: "50%",
+                border: "2px solid rgba(255, 255, 255, 0.85)",
+                opacity: doodle.opacity,
+                pointerEvents: "none",
+                animation: `foodlicious-doodle-float ${doodle.duration} ease-in-out ${doodle.delay} infinite`,
+                "@keyframes foodlicious-doodle-float": {
+                  "0%, 100%": { transform: "translateY(0) rotate(0deg)" },
+                  "50%": { transform: "translateY(-12px) rotate(25deg)" },
+                },
+              }}
+            />
+          ))}
           <Typography
             variant="body2"
             sx={{ fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", opacity: 0.9 }}
@@ -94,11 +127,11 @@ export function BannerCarousel({ campaigns }: { campaigns: CampaignItem[] }) {
             sx={{
               display: "inline-block",
               mt: 0.5,
-              maxWidth: 480,
+              whiteSpace: "nowrap",
               fontFamily: "var(--font-space-grotesk), var(--font-geist-sans), system-ui, sans-serif",
               fontWeight: 700,
               letterSpacing: "-0.01em",
-              fontSize: { xs: "1.5rem", sm: "2.125rem" },
+              fontSize: { xs: "1.05rem", sm: "1.6rem", md: "2.125rem" },
               animation: "foodlicious-promo-pulse 1.8s ease-in-out infinite",
               "@keyframes foodlicious-promo-pulse": {
                 "0%, 100%": { transform: "scale(1)" },

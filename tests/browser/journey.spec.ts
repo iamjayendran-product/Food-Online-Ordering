@@ -9,7 +9,7 @@ test("TC-J.1 guest journey: search, menu, basket, checkout, login, pay", async (
   await page.locator("#menu-categories li", { hasText: "Idli (4 pcs)" }).getByRole("button", { name: "Add" }).click();
   const dosaRow = page.locator("#menu-categories li", { hasText: "Kal Dosa" });
   await dosaRow.getByRole("button", { name: "Add" }).click();
-  await dosaRow.getByRole("button", { name: "Add" }).click();
+  await dosaRow.getByRole("button", { name: "Increase quantity of Kal Dosa" }).click();
 
   await page.goto("/basket");
   await expect(page.getByLabel("Quantity of Kal Dosa", { exact: true })).toHaveText("2");

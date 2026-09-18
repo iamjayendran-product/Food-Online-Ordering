@@ -4,13 +4,19 @@ import CardContent from "@mui/material/CardContent";
 import Chip from "@mui/material/Chip";
 import Typography from "@mui/material/Typography";
 import ScheduleIcon from "@mui/icons-material/Schedule";
+import EventAvailableIcon from "@mui/icons-material/EventAvailable";
 import { RestaurantImage } from "@/components/restaurant-image";
 import { RestaurantCarousel } from "@/components/restaurant-carousel";
 import { RatingStars } from "@/components/rating-stars";
 import { FavoriteButton } from "@/components/favorite-button";
 import { VegMarker } from "@/components/veg-marker";
 import { LinkCardActionArea } from "@/components/next-link-mui";
+import { brand } from "@/theme";
 import type { RestaurantCard as RestaurantCardData } from "@/lib/restaurants";
+
+// Sin & Tonic only, per an explicit owner request — a single-restaurant
+// promo label isn't worth a new schema field.
+const EXCLUSIVE_SLUG = "sin-and-tonic";
 
 export function RestaurantCard({
   restaurant,
@@ -44,6 +50,28 @@ export function RestaurantCard({
         />
       </Box>
 
+      {restaurant.slug === EXCLUSIVE_SLUG && (
+        <Box
+          sx={{
+            position: "absolute",
+            top: 8,
+            left: 8,
+            zIndex: 2,
+            px: 1.25,
+            py: 0.5,
+            borderRadius: 999,
+            backgroundColor: brand.sunshineFill,
+            color: "#1C1917",
+            fontSize: "0.6875rem",
+            fontWeight: 700,
+            letterSpacing: "0.02em",
+            boxShadow: "0 2px 8px rgba(28, 25, 23, 0.18)",
+          }}
+        >
+          Foodlicious exclusive
+        </Box>
+      )}
+
       <LinkCardActionArea
         href={`/restaurants/${restaurant.slug}`}
         sx={{ display: "block", height: "100%" }}
@@ -72,6 +100,15 @@ export function RestaurantCard({
                 <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                   <ScheduleIcon sx={{ fontSize: 15 }} />
                   {`${restaurant.pickupMinutes} mins`}
+                </Box>
+              }
+              size="small"
+            />
+            <Chip
+              label={
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                  <EventAvailableIcon sx={{ fontSize: 15 }} />
+                  Pre-order available
                 </Box>
               }
               size="small"

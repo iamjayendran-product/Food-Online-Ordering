@@ -44,13 +44,12 @@ test("TC-5.3 opening checkout with an empty basket redirects to the basket page"
   await expect(page).toHaveURL("/basket");
 });
 
-test("TC-5.4 the payment panel defaults to success and the Pay button shows the total", async ({ page }) => {
+test("TC-5.4 the payment panel defaults to online payment and the Pay button shows the total", async ({ page }) => {
   await addChickenBiryaniToBasket(page);
   await loginAs(page, "priya@example.com");
   await page.goto("/checkout");
 
-  await expect(page.getByLabel("Simulate successful payment")).toBeChecked();
-  await expect(page.getByLabel("Simulate failed payment")).not.toBeChecked();
+  await expect(page.getByRole("button", { name: "Pay later online", pressed: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Pay ₹273" })).toBeVisible();
 });
 

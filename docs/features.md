@@ -28,6 +28,10 @@ This is the single place to see what's being built, in what order, and where eac
 | F12 | Pre-order scheduling | P0-9 | F5, F6 | TC-9.1–9.4 (4) | **Done** | PASS (round 2/2) | 2026-09-16 |
 | F13 | Payment method (cash/online) redesign + simulated kitchen view | P0-10 | F5, F6 | TC-10.1–10.5 (5) | **Done** | PASS (round 1/1) | 2026-09-17 |
 | F14 | Discovery page redesign: promotional carousel, category browse, full photo coverage | P0-11 | F2, F7, F10 | TC-11.1–11.9 (9) | **Done** | PASS (round 1/1) | 2026-09-17 |
+| F15 | Discovery page polish: doodle/no-wrap banner, chip tick + Clear all, pre-order chip, exclusive badge, faster carousel | P0-12 | F14 | TC-12.1–12.5 (5) | **Done** | PASS (round 2/2) | 2026-09-18 |
+| F16 | Menu page redesign: remove Recommended, bigger clickable photos, add-to-basket stepper, category colors | P0-13 | F3, F7 | TC-13.1–13.3 (3) | **Done** | PASS (round 2/2) | 2026-09-18 |
+| F17 | Menu data expansion: full menus for all 10 restaurants | (data only, no new TCs) | F9 | n/a | **Done** | PASS (round 2/2) | 2026-09-18 |
+| F18 | Checkout: remove the payment-simulation toggle | P0-6 (revised) | F5, F6 | TC-5.4, TC-6.16, TC-10.1, TC-10.4 (revised); TC-6.10/6.11 removed | **Done** | PASS (round 2/2) | 2026-09-18 |
 
 **Build order:** F0 → F1 → F2 → F3 → F4 → F5 → F6, one feature per cycle. F7, the Material UI redesign, and the Foodlicious relaunch (F8 onward) followed as owner-requested work after v1 shipped — see `docs/superpowers/specs/2026-09-16-foodlicious-relaunch-design.md` and its plan.
 
@@ -276,6 +280,9 @@ Reviewer: `PASS` on the first round for both F5 and F6 — no additional defects
 | 2026-09-16 | F12 (pre-order scheduling) built as new PRD requirement P0-9. Reviewer round 1 FIXED a real timezone bug: the scheduled pickup instant was built in the browser's local timezone instead of IST, invisible in this session's tests only because the dev machine itself is IST. Round 2 PASS. Committed (commit 4bc645e). |
 | 2026-09-17 | F13 (payment method redesign + simulated kitchen view) built as new PRD requirement P0-10: checkout now offers "Pay in cash" (places the order outright, no charge attempted) and "Pay later online" (unchanged simulated success/failure flow); the confirmation page adds an animated "Kitchen view" card with a LIVE badge. Fixed a self-caught test regression: the new "Pay in cash"/"Pay later online" buttons broke pre-existing tests' ambiguous `/^Pay/` button matcher, and the new kitchen-view test's `getByText("LIVE")` matched the label text too (case-insensitive substring) until scoped to an exact match. Two full-suite runs surfaced unrelated pre-existing flakes (TC-8.3, TC-6.4, TC-6.6, TC-2.1) that passed individually in isolation — not regressions. Reviewer PASS, round 1. |
 | 2026-09-17 | F14 (discovery page redesign) built as new PRD requirement P0-11: the campaigns marquee and static "Order ahead" hero were replaced by an auto-advancing promotional carousel (first slide: "Your first order in Foodlicious is 50% off"; remaining slides are the seeded campaigns, now with real photos via `Campaign.imageUrl`, which existed since F10 but was never populated); the search bar moved below the carousel; a new cuisine category-chip strip (reusing `Restaurant.cuisines`) filters the grid; every restaurant now has real photos, with Pakwan taking over the "deliberately photo-less" test role from The Grand Sweets and Snacks. Caught and fixed two of my own test-authoring bugs before review: a mismatched cuisine assumption (Adyar Ananda Bhavan isn't tagged "Tiffin") and a carousel auto-advance race against Playwright's own default assertion timeout, fixed by freezing the fake clock before navigation rather than after. A full-suite run hit TC-7.5 as a pre-existing unrelated flake — passed cleanly in isolation. Reviewer PASS, round 1. |
+| 2026-09-17 | Owner requested a 12-item follow-up batch (banner doodle/no-wrap, chip tick + Clear all, Pakwan photo fix, faster carousel, pre-order card indicator, Sin & Tonic exclusive badge, remove Recommended, bigger clickable item photos, full menu expansion, add-to-basket stepper + animation, category heading colors, remove the payment-simulation toggle). Brainstormed as a bounded batch; built continuously as F15-F18. |
+| 2026-09-17 | F15 (discovery polish, P0-12) + F16 (menu redesign, P0-13) + F17 (menu data expansion) + F18 (checkout payment-simulation removal, revises P0-6/P0-10) built together. Ponnusamy Hotel (untouched by any prior test) became the new deliberately photo-less restaurant so Pakwan could get real photos. `MenuItem.isRecommended` dropped via a hand-written migration (`migrate dev` refused in this non-interactive sandbox). TC-6.10/TC-6.11 deleted outright (their premise — a UI failure toggle — no longer exists); TC-6.16 rewritten to create its `PAYMENT_FAILED` fixture directly via `testDb` instead of through checkout. Caught and fixed 3 issues before/during verification: my new promo-slide test not freezing the clock before navigation; two pre-existing tests (TC-8.3, TC-8.5) whose own clock-freeze timing started racing the banner carousel's second real-time interval on the same page; and TC-3.1's expected category list going stale once Dindigul Thalappakatti gained a new "Curries" category from the F17 expansion. Reviewer round 1 (started 2026-09-17, resumed 2026-09-18 after a session-limit interruption) FIXED a stale test comment (TC-3.2 in menu.spec.ts referenced the deleted Recommended section instead of the real reason for scoping — duplicate ₹260 prices on the same menu). |
+| 2026-09-18 | F15-F18 reviewer round 2 PASS from a fresh instance — no defects found. Signed off and committed. |
 
 ---
 
@@ -382,3 +389,44 @@ Owner request: remove the campaigns marquee, replace the "Order ahead. Skip the 
 **Verification:** `lint`/`tsc`/`tc:check`/`next build` clean; full Playwright suite 95/95 (one full-suite run also hit TC-7.5, a pre-existing unrelated flake — passed cleanly in isolation both times).
 
 **Independent review (2026-09-17): PASS, round 1.** No defects found.
+
+---
+
+## F15-F18: Discovery polish, menu redesign, menu expansion, payment simplification (2026-09-17)
+
+A same-day 12-item follow-up batch on top of F14, brainstormed as a bounded batch (all touching pages/flows already built) and built continuously as four small feature cycles: **F15** discovery polish (PRD P0-12), **F16** menu page redesign (P0-13), **F17** menu data expansion (data-only, no new TCs), **F18** checkout payment-simulation removal (revises P0-6/P0-10).
+
+**Decisions taken with the owner**
+- Item 3 ("Pakwan has no images, fix it once and for all") directly reversed a decision from earlier the same session — Pakwan had been deliberately chosen as the new photo-less restaurant right after F14 gave Grand Sweets real photos. The owner chose to keep the same *pattern* (one restaurant stays deliberately photo-less, to keep TC-2.7/TC-8.6 testing something real) but move it again: **Ponnusamy Hotel**, untouched by any existing test, is now that restaurant.
+- Item 7 ("remove Recommended") was a full removal, not a hide: the UI section, `MenuItem.isRecommended`, its PRD requirement, and TC-7.8 are all gone.
+- Item 9 ("import the whole real menu") became a significant *expansion* (91 → 204 items across the 10 restaurants, 2-4 new categories per restaurant), written in the same voice as the existing seed data — not claimed as scraped from any restaurant's actual public menu, since that can't be verified.
+- Item 12 ("remove the payment simulation section") turned out to be ambiguous between removing cosmetic wording and removing the actual failure-simulation control. The owner chose the latter: checkout no longer offers a way to trigger a failed payment. This walks back part of P0-6 and Goal 3 (a failed payment being customer-recoverable) — the mechanism itself (`PAYMENT_FAILED`, `PaymentProvider`) is untouched and still verified at the data layer by TC-6.3, just no longer reachable through the UI.
+
+**F15 — Discovery polish**
+- `banner-carousel.tsx`: `AUTO_ADVANCE_MS` 5000 → 3000; promo headline gets `whiteSpace: "nowrap"` with a responsive font-size step-down, plus four small animated circular "doodles" (plain positioned `Box` elements with a floating/rotating keyframe, `aria-hidden`).
+- `cuisine-filter-chips.tsx`: the active chip's label gains a leading `CheckIcon` — **inside `label`, not the `icon` prop**, the same SSR/hydration trap F7 hit with `Chip icon={...}` under `next dev`. A "Clear all" text link appears next to the chip row only while a filter is active.
+- `restaurant-card.tsx`: every card gets a second chip, "Pre-order available" (pre-order is platform-wide since F12, not per-restaurant, so this is informational everywhere, not a flag). Sin & Tonic specifically gets a "Foodlicious exclusive" badge, an absolutely-positioned overlay opposite the favourite button (`EXCLUSIVE_SLUG` hardcoded — a one-restaurant label isn't worth a schema field).
+
+**F16 — Menu page redesign**
+- Recommended section deleted from `restaurants/[slug]/page.tsx`; `getRestaurantMenu()`'s `recommended` computation and `MAX_RECOMMENDED` removed from `src/lib/restaurants.ts`; `MenuItem.isRecommended` dropped from the schema.
+- New `menu-item-image.tsx` (client): the item photo is now a `<button>` wrapping a bigger thumbnail (was hidden below `sm`, now always shown); clicking opens a MUI `Dialog` with the full-size photo and a Close button. The dialog is unmounted while closed, so it can never double-count against `#menu-categories li img` assertions (TC-7.7).
+- `add-to-basket-button.tsx` rewritten from a stateless one-shot button into a component that reads its own live quantity from `useBasket()`: shows "Add" at 0, a −/count/+ stepper above 0 (same control shape and aria-label convention as the basket page's own stepper), with a CSS "pop" animation that plays once, the moment the stepper first mounts (i.e. the instant Add succeeds).
+- Category `<h2>` headings cycle four brand colors (`brand.tomato/forest/kiwi/sunshine`) by index.
+
+**F17 — Menu data expansion**
+- Every restaurant's `categories`/`items` array in `prisma/seed.ts` grew substantially (see the change-log entry for exact counts), each restaurant gaining 1-2 new categories. The two deliberately-broken seed rows (Murugan Idli Shop's empty "Seasonal Specials"; Dindigul Thalappakatti's unavailable Gobi Manchurian, now without the now-deleted `isRecommended` flag) were preserved.
+
+**F18 — Checkout payment-simulation removal**
+- `checkout-view.tsx`: `paymentChoice` state and the "Simulate successful/failed payment" `RadioGroup` deleted; the online path now always sends `simulateSuccess: true`.
+- `placeOrder`/`PaymentProvider`/`PAYMENT_FAILED` are untouched — a real gateway could still fail for real reasons, and TC-6.3 (a logic test calling `placeOrder()` directly) still proves the failure path works.
+
+**Bugs I caught and fixed before/during verification (not planted, genuine issues)**
+1. Two of my own new tests (TC-12.1, and initially TC-11.1/TC-11.3/TC-11.5 in the prior F14 cycle) didn't freeze the fake clock *before* navigating, so the carousel's real-time auto-advance could fire mid-assertion under a loaded machine — fixed by calling `page.clock.pauseAt(Date.now())` before `page.goto()`, not after.
+2. Adding the banner carousel's own mount-triggered real-time interval to the home page broke two **pre-existing** tests (TC-8.3, TC-8.5) that used to safely pause the clock *after* page load, because now two independent real-time intervals are racing under the same `install()`-without-pause window (observed as `clock.pauseAt: Cannot fast-forward to the past`). Fixed the same way: pause before navigating.
+3. TC-3.1 pinned Dindigul Thalappakatti's exact category list (`["Biryani", "Starters", "Beverages"]`); F17 added a new "Curries" category there, which the test hadn't anticipated. Updated the expectation.
+
+**Verification:** `lint`/`tsc`/`tc:check`/`next build` clean; full Playwright suite 100/100.
+
+**Independent review:**
+- **Round 1 — FIXED.** One defect: `tests/browser/menu.spec.ts`'s TC-3.2 scoping comment had gone stale — it justified scoping to the dish's own row by citing the (now-deleted) Recommended section, when the real reason is that several other items on the same menu also cost ₹260. Comment-only fix; the test's own assertions and scoping were already correct.
+- **Round 2 — PASS**, from a fresh reviewer with no knowledge of round 1: no defects found. `lint`/`tsc`/`tc:check`/`build`/100 tests all clean.

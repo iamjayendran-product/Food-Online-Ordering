@@ -104,24 +104,6 @@ test("TC-7.7 every menu item shows a photo", async ({ page }) => {
   expect(await images.count()).toBe(rowCount);
 });
 
-test("TC-7.8 the menu opens with a Recommended section", async ({ page }) => {
-  await page.goto("/restaurants/dindigul-thalappakatti");
-
-  await expect(page.getByRole("heading", { level: 2 }).first()).toHaveText("Recommended");
-
-  // A recommended dish deliberately appears twice: once in the shortcut and
-  // once in its own category.
-  await expect(page.getByText("Seeraga Samba Chicken Biryani", { exact: true })).toHaveCount(2);
-
-  // Gobi Manchurian is marked recommended in the seed data too, but it's
-  // unavailable — it must be excluded from the Recommended shortcut and
-  // appear only once, in its own category.
-  await expect(page.getByText("Gobi Manchurian", { exact: true })).toHaveCount(1);
-  await expect(
-    page.locator("#menu-categories li", { hasText: "Gobi Manchurian" }),
-  ).toHaveCount(1);
-});
-
 test("TC-7.9 the application is branded Foodlicious", async ({ page }) => {
   await page.goto("/");
 

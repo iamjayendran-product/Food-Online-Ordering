@@ -67,7 +67,6 @@ export type MenuItemDTO = {
   isVeg: boolean;
   isAvailable: boolean;
   imageUrl: string | null;
-  isRecommended: boolean;
 };
 
 export type MenuCategoryDTO = {
@@ -87,12 +86,7 @@ export type RestaurantMenu = {
   ratingAvg: number;
   reviewCount: number;
   categories: MenuCategoryDTO[];
-  // The same items also appear in their own category further down the page;
-  // this is a shortcut to the kitchen's picks, not a separate menu.
-  recommended: MenuItemDTO[];
 };
-
-const MAX_RECOMMENDED = 4;
 
 export async function getRestaurantMenu(slug: string): Promise<RestaurantMenu | null> {
   const restaurant = await db.restaurant.findUnique({
@@ -122,7 +116,6 @@ export async function getRestaurantMenu(slug: string): Promise<RestaurantMenu | 
               isVeg: true,
               isAvailable: true,
               imageUrl: true,
-              isRecommended: true,
             },
           },
         },
@@ -134,11 +127,5 @@ export async function getRestaurantMenu(slug: string): Promise<RestaurantMenu | 
 
   const categories = restaurant.categories.filter((category) => category.items.length > 0);
 
-  // Only offer something the customer can actually order.
-  const recommended = categories
-    .flatMap((category) => category.items)
-    .filter((item) => item.isRecommended && item.isAvailable)
-    .slice(0, MAX_RECOMMENDED);
-
-  return { ...restaurant, categories, recommended };
+  return { ...restaurant, categories };
 }

@@ -3,6 +3,7 @@ import Typography from "@mui/material/Typography";
 import { formatInr } from "@/lib/format";
 import { VegMarker } from "@/components/veg-marker";
 import { AddToBasketButton } from "@/components/add-to-basket-button";
+import { MenuItemImage } from "@/components/menu-item-image";
 import type { MenuItemDTO } from "@/lib/restaurants";
 
 type MenuItemRowProps = {
@@ -56,20 +57,7 @@ export function MenuItemRow({
       </Box>
 
       <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexShrink: 0 }}>
-        {item.imageUrl && (
-          <Box
-            component="img"
-            src={item.imageUrl}
-            alt=""
-            sx={{
-              display: { xs: "none", sm: "block" },
-              height: 72,
-              width: 96,
-              borderRadius: 2,
-              objectFit: "cover",
-            }}
-          />
-        )}
+        {item.imageUrl && <MenuItemImage src={item.imageUrl} name={item.name} />}
         <AddToBasketButton
           isAvailable={item.isAvailable}
           restaurantSlug={restaurantSlug}

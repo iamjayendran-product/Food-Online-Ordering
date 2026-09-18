@@ -67,39 +67,6 @@ test("TC-6.8 clearing cookies mid-checkout sends Pay to login with no new order"
   expect(await testDb.order.count()).toBe(beforeCount);
 });
 
-test("TC-6.10 paying with failure selected shows a failure message and keeps the basket", async ({ page }) => {
-  await addChickenBiryaniToBasket(page);
-  await loginAs(page, "priya@example.com");
-  await page.goto("/checkout");
-
-  await page.getByLabel("Simulate failed payment").check();
-  await page.getByRole("button", { name: "Pay ₹273" }).click();
-
-  await expect(
-    page.getByText("Payment failed. You have not been charged. Please try again."),
-  ).toBeVisible();
-  await expect(page).toHaveURL("/checkout");
-  await expect(page.getByText("Seeraga Samba Chicken Biryani")).toBeVisible();
-});
-
-test("TC-6.11 retrying with success after a failure reaches the confirmation page", async ({ page }) => {
-  await addChickenBiryaniToBasket(page);
-  await loginAs(page, "priya@example.com");
-  await page.goto("/checkout");
-
-  await page.getByLabel("Simulate failed payment").check();
-  await page.getByRole("button", { name: "Pay ₹273" }).click();
-  await expect(
-    page.getByText("Payment failed. You have not been charged. Please try again."),
-  ).toBeVisible();
-
-  await page.getByLabel("Simulate successful payment").check();
-  await page.getByRole("button", { name: "Pay ₹273" }).click();
-
-  await expect(page).toHaveURL(/\/orders\/.+/);
-  await expect(page.getByRole("heading", { name: "Order confirmed" })).toBeVisible();
-});
-
 test("TC-6.12 the confirmation page shows order details and the header basket count is 0", async ({ page }) => {
   await addChickenBiryaniToBasket(page);
   await loginAs(page, "priya@example.com");
@@ -164,19 +131,28 @@ test("TC-6.15 a logged-out visitor is asked to log in and returned to the confir
 });
 
 test("TC-6.16 a payment-failed order's URL is not found", async ({ page }) => {
-  await addChickenBiryaniToBasket(page);
-  await loginAs(page, "priya@example.com");
-  await page.goto("/checkout");
-  await page.getByLabel("Simulate failed payment").check();
-  await page.getByRole("button", { name: "Pay ₹273" }).click();
-  await expect(
-    page.getByText("Payment failed. You have not been charged. Please try again."),
-  ).toBeVisible();
-
-  const failedOrder = await testDb.order.findFirst({
-    where: { status: "PAYMENT_FAILED" },
-    orderBy: { createdAt: "desc" },
+  // Checkout no longer exposes a way to simulate a failed payment, so this
+  // creates the PAYMENT_FAILED order directly — the confirmation page must
+  // still 404 it, since that mechanism is still real (see place-order.ts and
+  // TC-6.3), just no longer reachable through the UI.
+  const user = await testDb.user.findUniqueOrThrow({ where: { email: "priya@example.com" } });
+  const restaurant = await testDb.restaurant.findUniqueOrThrow({
+    where: { slug: "dindigul-thalappakatti" },
   });
-  await page.goto(`/orders/${failedOrder!.id}`);
+  const failedOrder = await testDb.order.create({
+    data: {
+      userId: user.id,
+      restaurantId: restaurant.id,
+      status: "PAYMENT_FAILED",
+      subtotalPaise: 26000,
+      gstPaise: 1300,
+      totalPaise: 27300,
+      paymentProvider: "mock",
+      paymentMethod: "ONLINE",
+    },
+  });
+
+  await loginAs(page, "priya@example.com");
+  await page.goto(`/orders/${failedOrder.id}`);
   await expect(page.getByText("This page could not be found.")).toBeVisible();
 });

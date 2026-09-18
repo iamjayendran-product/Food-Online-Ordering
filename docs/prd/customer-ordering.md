@@ -28,7 +28,7 @@ Not solving it means lost time for customers and walk-away orders for restaurant
 **User goals**
 1. **Order ahead in under 2 minutes.** A visitor can go from the home page to a confirmed pickup order in under 2 minutes, measured by the end-to-end journey test (TC-J.1) and a manual walkthrough.
 2. **Never charged a surprise amount.** A customer is never charged a total different from the one shown at checkout (0 occurrences; TC-6.6).
-3. **A failed payment is recoverable.** A failed payment never creates a placed order and never loses the customer's basket (TC-6.3, TC-6.10, TC-6.11).
+3. **A failed payment is recoverable.** A failed payment never creates a placed order and never loses the customer's basket (TC-6.3). **Note (2026-09-17, F18):** checkout no longer exposes a way for a customer to trigger a failed payment — online payment always succeeds via the UI. The mechanism itself (a `PAYMENT_FAILED` order is never shown as placed, and never blocks a retry) is still real and still verified at the data layer, just no longer customer-reachable.
 
 **Project goals**
 
@@ -135,14 +135,14 @@ Selecting a restaurant loads its menu.
 - **Given** a guest with items in the basket, **when** they go to checkout, **then** they're asked to log in and returned to checkout with the basket intact. [TC-5.1]
 - Checkout shows the pickup restaurant's name and address, the note "Pickup only: collect at the counter", the items, subtotal, GST and a total identical to the basket's. [TC-5.2]
 - Opening checkout with an empty basket sends the customer to the basket page. [TC-5.3]
-- **Simulated payment:** the customer chooses "Simulate successful payment" (default) or "Simulate failed payment", and the pay button shows the total, e.g. "Pay ₹651". [TC-5.4]
+- **Simulated payment:** ~~the customer chooses "Simulate successful payment" (default) or "Simulate failed payment"~~ **removed by F18 (2026-09-17), online payment always succeeds via the UI** — and the pay button shows the total, e.g. "Pay ₹651". [TC-5.4]
 - While a payment is processing, the pay button can't be pressed again, so exactly one order attempt is made. [TC-5.5]
 
 *Dependencies:* P0-1 (login) and P0-4 (basket).
 
 #### P0-6: Place order and confirmation (F6)
-- **Given** a valid basket, **when** simulated payment succeeds, **then** the order is placed using **current menu prices** (not prices sent by the browser), item names and prices are recorded as they were at order time, the basket is emptied, and the customer lands on the confirmation page. [TC-6.1, TC-6.11, TC-6.12]
-- **When** simulated payment fails, **then** the customer sees "Payment failed. You have not been charged. Please try again.", stays on checkout with the basket intact, no placed order exists, and they can retry. [TC-6.3, TC-6.10, TC-6.11]
+- **Given** a valid basket, **when** simulated payment succeeds, **then** the order is placed using **current menu prices** (not prices sent by the browser), item names and prices are recorded as they were at order time, the basket is emptied, and the customer lands on the confirmation page. [TC-6.1, TC-6.12]
+- ~~**When** simulated payment fails, **then** the customer sees "Payment failed. You have not been charged. Please try again.", stays on checkout with the basket intact, no placed order exists, and they can retry.~~ **Superseded by F18 (2026-09-17):** the checkout UI no longer offers a way to simulate a failed payment — online payment always succeeds. The failure-handling code path (`placeOrder`, `PaymentProvider`) is unchanged and still covered at the data layer. [TC-6.3]
 - **Given** an item became unavailable before payment, **then** no order is placed, the affected item is flagged, and payment is blocked until it's removed. [TC-6.4, TC-6.5]
 - **Given** the total shown differs from current prices, **then** no order is placed, the basket is refreshed to current prices, and the customer is told prices changed. [TC-6.6]
 - Invalid orders are rejected with no order created: quantities outside 1–10, items from more than one restaurant, unknown items, or browser-supplied prices. [TC-6.2, TC-6.5, TC-6.7]
@@ -167,10 +167,10 @@ Presentation over the existing order flow. Nothing here changes pricing, availab
 - Each store card marks the kitchen **vegetarian or non-vegetarian**, using the same symbol as menu items. A restaurant counts as vegetarian only when every dish on its menu is. [TC-7.3]
 - Each store card carries a **favourite control**. **Given** a signed-in customer, **when** they favourite a restaurant, **then** it is still favourited after a reload, and only for that customer. A logged-out visitor is sent to log in instead. [TC-7.5, TC-7.6]
 - Every **menu item shows a photo**. [TC-7.7]
-- The menu opens with a **Recommended** section of the kitchen's picks, above the full menu. Recommended dishes also stay in their own category, so such a dish appears twice by design, and only available dishes are recommended. [TC-7.8]
+- ~~The menu opens with a **Recommended** section of the kitchen's picks, above the full menu.~~ **Removed by F16 (2026-09-17):** the Recommended section, `MenuItem.isRecommended`, and its test were deleted at the owner's request. The menu now opens directly on its categories.
 - The application is named **Foodlicious**. [TC-7.9]
 
-*Technical considerations:* pickup time, rating and review count are stored per restaurant and seeded; vegetarian status is derived from the menu rather than stored, so it cannot drift from the dishes on sale. Favourites are per user in the database, so they follow the customer across devices. Because Recommended repeats items, the full menu sits inside a stable `#menu-categories` container that tests scope to.
+*Technical considerations:* pickup time, rating and review count are stored per restaurant and seeded; vegetarian status is derived from the menu rather than stored, so it cannot drift from the dishes on sale. Favourites are per user in the database, so they follow the customer across devices. The full menu sits inside a stable `#menu-categories` container that tests scope to (a leftover of when Recommended duplicated items above it — kept because tests already depend on it).
 
 #### P0-8: Discovery page UX (F10, F11)
 Presentation over the existing discovery flow. Nothing here changes search results, pricing or availability.
@@ -196,7 +196,7 @@ Checkout offers a real choice of how the customer pays; the confirmation page ad
 
 - **Given** the checkout page, **when** the customer views the Payment card, **then** they see two buttons, **"Pay in cash"** and **"Pay later online"**, with online selected by default. [TC-10.1]
 - **Given** "Pay in cash" is selected, **when** the customer places the order, **then** no payment charge is attempted, the order is placed outright, the pay button reads "Place order", and the confirmation page shows "Payment: Pay ₹X in cash at pickup". [TC-10.2, TC-10.3]
-- **Given** "Pay later online" is selected, **then** the existing simulated success/failure sub-choice is shown, the pay button reads "Pay ₹X", and the failure/retry behavior from P0-6 is unchanged. The confirmation page shows "Payment: Paid online (simulated)". [TC-10.4]
+- **Given** "Pay later online" is selected, **then** the pay button reads "Pay ₹X". The confirmation page shows "Payment: Paid online (simulated)". ~~The existing simulated success/failure sub-choice is shown~~ **Removed by F18 (2026-09-17)** — see P0-6's Goal 3 note. [TC-10.4]
 - The confirmation page shows a **simulated kitchen view** — an animated illustration, not a real feed — labelled "Simulated live view — `<restaurant name>`'s kitchen" with a "LIVE" badge. [TC-10.5]
 
 *Technical considerations:* `Order.paymentMethod` (`CASH` | `ONLINE`) is a real field, not a copy-only change — a cash order is created with `status: "PLACED"` directly, skipping the `PENDING_PAYMENT` step and the payment provider entirely, since there is nothing to charge. The kitchen view has no backing data or camera; it's a client-side animation that takes only the restaurant's name.
@@ -210,7 +210,28 @@ Replaces the discovery page's static banner and campaigns marquee with a promoti
 - Below the search field, a row of **category chips** (e.g. Biryani, Tiffin) lets a customer browse by cuisine, replacing the marquee's old position. **Given** a category chip, **when** clicked, **then** the restaurant grid filters to restaurants tagged with that cuisine; clicking the same chip again clears the filter; the filter combines with an active name search. [TC-11.6, TC-11.7, TC-11.8, TC-11.9]
 - Every restaurant on discovery shows a **real photo**. No restaurant is deliberately photo-less anymore except the one card that still exercises the no-photo fallback rendering path. [TC-11.4]
 
-*Technical considerations:* no new schema — this reuses `Campaign.imageUrl` (seeded but previously unused by the marquee) and the existing `Restaurant.cuisines` free-text tags (also already shown as chips on each card). `listRestaurants()` gains an optional cuisine filter alongside its existing name search. Pakwan is now the restaurant seeded with no photos, taking over that role from The Grand Sweets and Snacks, which now has real photos like every other restaurant.
+*Technical considerations:* no new schema — this reuses `Campaign.imageUrl` (seeded but previously unused by the marquee) and the existing `Restaurant.cuisines` free-text tags (also already shown as chips on each card). `listRestaurants()` gains an optional cuisine filter alongside its existing name search. The Grand Sweets and Snacks now has real photos like every other restaurant. **Update (F15, 2026-09-17):** Pakwan also got real photos — **Ponnusamy Hotel** is now the one restaurant seeded with no photos, so TC-2.7/TC-8.6 still have something real to test.
+
+#### P0-12: Discovery page polish (F15)
+Small refinements to the F14 discovery redesign, on top of the same carousel/chip/card mechanisms — no new pages or data model.
+
+- The promo slide's headline never wraps to a second line, and the carousel background carries a few small animated decorative shapes. [TC-12.1]
+- **Given** an active category chip, **then** it shows a check mark, and a subtle **"Clear all"** link appears next to the chip row (only while a filter is active) that clears it. [TC-12.2, TC-12.3]
+- Every store card shows a **"Pre-order available"** chip alongside its pickup-time chip — scheduling is already platform-wide (P0-9), so this is informational on every card, not a per-restaurant flag. [TC-12.4]
+- **Sin & Tonic**'s card carries a **"Foodlicious exclusive"** badge, positioned opposite the favourite button. [TC-12.5]
+- The banner carousel's auto-advance interval is 3 seconds (previously 5).
+
+*Technical considerations:* the exclusive badge is a hardcoded slug check in `RestaurantCard` (`sin-and-tonic`) — a single-restaurant label isn't worth a new schema field. The doodle shapes and check mark are plain positioned/inline elements, not new dependencies; the check mark sits inside the chip's `label` (not MUI's `icon` prop), avoiding the SSR/hydration bug documented in F7.
+
+#### P0-13: Menu page redesign (F16)
+Reworks how the menu page presents items: no more Recommended shortcut, bigger and inspectable photos, and quantity control without leaving the page.
+
+- ~~The menu opens with a Recommended section~~ **removed at the owner's request** — see P0-7's note. The menu now opens directly on its categories.
+- **Given** a menu item's photo, **when** the customer clicks it, **then** it opens larger with a close control; the thumbnail itself is also bigger than before and no longer hidden on mobile. [TC-13.1]
+- **Given** an item not yet in the basket, **when** the customer clicks Add, **then** a brief acknowledgement animation plays and the control becomes a **quantity stepper** (−/count/+) reflecting the live basket count for that item; decreasing to 0 reverts to an Add button. [TC-13.2]
+- Each category heading is colored distinctly from its neighbours, cycling a small set of brand colors. [TC-13.3]
+
+*Technical considerations:* `AddToBasketButton` now reads its own quantity from `useBasket()` instead of being a stateless one-shot button; the stepper reuses the exact control pattern already on the basket page (`increment`/`decrement`, same aria-label conventions). The photo lightbox is a small new client component (`MenuItemImage`) using a MUI `Dialog`, unmounted while closed so it never double-counts against `#menu-categories li img` assertions.
 
 ### Nice-to-Have (P1)
 **None committed for v1.** The scope is deliberately tight. Anything proposed for v1 enters here only with a matching removal from P0 or an explicit timeline extension.
@@ -370,7 +391,7 @@ All test cases are automated with Playwright. **B** = browser test; **L** = logi
 | TC-5.1 | B | Guest with a basket clicks Checkout | Sent to `/login?next=/checkout`; after login, on checkout with basket intact |
 | TC-5.2 | B | Checkout contents | Restaurant name and address, "Pickup only", items, subtotal, GST 5%, total matching the basket |
 | TC-5.3 | B | Open `/checkout` with an empty basket | Redirected to the basket page |
-| TC-5.4 | B | Payment panel | Successful payment selected by default; button reads "Pay ₹651" |
+| TC-5.4 | B | Payment panel | Online payment selected by default; button reads "Pay ₹651" |
 | TC-5.5 | B | Double-click Pay | Button disabled while processing; exactly one new order |
 
 ### TC-6: Place order and confirmation (P0-6)
@@ -385,8 +406,6 @@ All test cases are automated with Playwright. **B** = browser test; **L** = logi
 | TC-6.7 | L | Quantity 0, −1, 11 or 1.5; empty basket | Validation error; no order |
 | TC-6.8 | B | Open checkout, clear cookies, click Pay | Sent to login; no new order |
 | TC-6.9 | L | Place two successful orders | Order numbers unique and increasing |
-| TC-6.10 | B | Pay with failure selected | Failure message; stays on checkout; basket intact |
-| TC-6.11 | B | Retry with success after a failure | Lands on the confirmation page |
 | TC-6.12 | B | View confirmation | "Order confirmed", order number, pickup name and address, items, totals, "Paid online (simulated)"; basket count 0 |
 | TC-6.13 | B | Reload the confirmation | Same page shown |
 | TC-6.14 | B | Another customer (Arjun) opens Priya's confirmation | Not found |
@@ -403,7 +422,6 @@ All test cases are automated with Playwright. **B** = browser test; **L** = logi
 | TC-7.5 | B | Signed-in customer favourites a store, then reloads | Control reads "Remove … from favourites" and still does after reload |
 | TC-7.6 | B | Logged-out visitor clicks favourite | Sent to the login page; nothing is favourited |
 | TC-7.7 | B | Menu items | Every row inside `#menu-categories` has exactly one photo |
-| TC-7.8 | B | Menu page opens | First level-2 heading is "Recommended"; a recommended dish appears twice, an unavailable dish once |
 | TC-7.9 | B | Branding | Page title and header wordmark both read Foodlicious |
 
 ### TC-8: Discovery page UX (P0-8)
@@ -425,10 +443,10 @@ All test cases are automated with Playwright. **B** = browser test; **L** = logi
 ### TC-10: Payment method and kitchen view (P0-10)
 | ID | Type | Scenario | Expected |
 |---|---|---|---|
-| TC-10.1 | B | Open checkout | Payment card shows "Pay in cash" and "Pay later online" buttons, online selected by default, success/failure sub-choice visible |
+| TC-10.1 | B | Open checkout | Payment card shows "Pay in cash" and "Pay later online" buttons, online selected by default |
 | TC-10.2 | B | Select "Pay in cash", place order | Confirmation shows "Payment: Pay ₹273 in cash at pickup" |
 | TC-10.3 | L | `placeOrder` with `paymentMethod: "CASH"` and `simulateSuccess: false` | Order placed outright (`PLACED`), no payment provider called, `paymentRef` null |
-| TC-10.4 | B | Toggle between cash and online | Pay button label and online sub-choice show/hide accordingly; failure path under online still works |
+| TC-10.4 | B | Toggle between cash and online | Pay button label switches between "Place order" and "Pay ₹X" |
 | TC-10.5 | B | View confirmation | "Kitchen view" heading, "LIVE" badge, "Simulated live view — `<restaurant>`'s kitchen" label |
 
 ### TC-11: Discovery page redesign (P0-11)
@@ -443,6 +461,22 @@ All test cases are automated with Playwright. **B** = browser test; **L** = logi
 | TC-11.7 | B | Click the active category chip again | Filter clears; all 10 restaurants shown |
 | TC-11.8 | B | Search "thalappakatti", then click "Biryani" | Both filters apply together; only Dindigul Thalappakatti shown |
 | TC-11.9 | L | `listRestaurants` with a cuisine filter, alone and combined with a name search | Narrows correctly; combines as AND; no match returns empty |
+
+### TC-12: Discovery page polish (P0-12)
+| ID | Type | Scenario | Expected |
+|---|---|---|---|
+| TC-12.1 | B | Promo slide headline | CSS `white-space: nowrap` |
+| TC-12.2 | B | A category filter is active | That chip shows a check mark |
+| TC-12.3 | B | No filter active, then one active | "Clear all" hidden, then visible; clicking it clears the filter |
+| TC-12.4 | B | Any store card | Shows a "Pre-order available" chip |
+| TC-12.5 | B | Sin & Tonic's card | Shows a "Foodlicious exclusive" badge |
+
+### TC-13: Menu page redesign (P0-13)
+| ID | Type | Scenario | Expected |
+|---|---|---|---|
+| TC-13.1 | B | Click a menu item's photo, then Close | Larger photo opens; closes and removes the enlarged image |
+| TC-13.2 | B | Click Add, then +/− | Becomes a quantity stepper reflecting the basket count; reverts to Add at 0 |
+| TC-13.3 | B | A menu page with multiple categories | Category headings render in more than one distinct color |
 
 ### TC-J: End-to-end journey (Goal 1)
 | ID | Type | Scenario | Expected |

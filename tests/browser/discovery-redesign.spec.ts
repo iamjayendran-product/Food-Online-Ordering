@@ -59,7 +59,7 @@ test("TC-11.5 the banner carousel auto-advances and pauses on hover", async ({ p
   const promo = page.getByText("Your first order in Foodlicious is 50% off");
   await expect(promo).toBeVisible();
 
-  await page.clock.runFor(5000);
+  await page.clock.runFor(3000);
   await expect(promo).toBeHidden();
 
   let current = null;
@@ -73,7 +73,7 @@ test("TC-11.5 the banner carousel auto-advances and pauses on hover", async ({ p
   expect(current).not.toBeNull();
 
   await current!.hover();
-  await page.clock.runFor(5000);
+  await page.clock.runFor(3000);
   await expect(current!).toBeVisible();
 });
 

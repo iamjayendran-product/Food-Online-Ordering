@@ -45,8 +45,8 @@ test("TC-2.5 the search term survives a reload; Back returns to the unfiltered l
 
 test("TC-2.7 a restaurant without an image shows an initials placeholder, not a broken image", async ({ page }) => {
   await page.goto("/");
-  const card = page.getByRole("link", { name: /Pakwan/ });
+  const card = page.getByRole("link", { name: /Ponnusamy Hotel/ });
 
-  await expect(card.getByRole("img", { name: "Pakwan" })).toBeVisible();
+  await expect(card.getByRole("img", { name: "Ponnusamy Hotel" })).toBeVisible();
   await expect(card.locator("img")).toHaveCount(0);
 });
