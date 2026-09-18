@@ -55,6 +55,25 @@ export function KitchenCam({ restaurantName }: { restaurantName: string }) {
           <circle cx="115" cy="70" r="6" fill="#5B564F" />
           <rect x="88" y="55" width="24" height="16" rx="2" fill="#6F6259" />
 
+          {/* Flames flickering under both burners */}
+          {[85, 115].map((cx, index) => (
+            <path
+              key={cx}
+              d={`M ${cx - 4} 78 Q ${cx} 68 ${cx + 4} 78 Q ${cx} 74 ${cx - 4} 78 Z`}
+              fill="#F4B400"
+              opacity="0.85"
+              style={{
+                transformOrigin: `${cx}px 78px`,
+                animation: `foodlicious-flame 0.9s ease-in-out ${index * 0.25}s infinite`,
+              }}
+            />
+          ))}
+
+          {/* Spoon stirring the pot */}
+          <g style={{ transformOrigin: "100px 63px", animation: "foodlicious-stir 1.8s ease-in-out infinite" }}>
+            <rect x="99" y="45" width="2" height="20" fill="#D8CFC4" />
+          </g>
+
           {/* Chef silhouette, gently swaying */}
           <g
             style={{
@@ -90,6 +109,14 @@ export function KitchenCam({ restaurantName }: { restaurantName: string }) {
               @keyframes foodlicious-steam {
                 0% { transform: translateY(0); opacity: 0.6; }
                 100% { transform: translateY(-30px); opacity: 0; }
+              }
+              @keyframes foodlicious-flame {
+                0%, 100% { transform: scaleY(1); opacity: 0.85; }
+                50% { transform: scaleY(1.3); opacity: 1; }
+              }
+              @keyframes foodlicious-stir {
+                0%, 100% { transform: rotate(-18deg); }
+                50% { transform: rotate(18deg); }
               }
             `}
           </style>

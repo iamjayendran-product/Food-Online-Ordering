@@ -2,11 +2,10 @@ import { notFound } from "next/navigation";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import Typography from "@mui/material/Typography";
-import PlaceOutlinedIcon from "@mui/icons-material/PlaceOutlined";
-import ScheduleIcon from "@mui/icons-material/Schedule";
 import { getRestaurantMenu } from "@/lib/restaurants";
 import { MenuItemRow } from "@/components/menu-item-row";
-import { RatingStars } from "@/components/rating-stars";
+import { MenuReels } from "@/components/menu-reels";
+import { FloatingBasketButton } from "@/components/floating-basket-button";
 import { RestaurantHeroBanner } from "@/components/restaurant-hero-banner";
 import { brand } from "@/theme";
 
@@ -29,50 +28,17 @@ export default async function RestaurantPage({
 
   return (
     <Box>
-      <RestaurantHeroBanner images={menu.images} name={menu.name} />
+      <RestaurantHeroBanner
+        images={menu.images}
+        name={menu.name}
+        cuisines={menu.cuisines}
+        address={menu.address}
+        pickupMinutes={menu.pickupMinutes}
+        ratingAvg={menu.ratingAvg}
+        reviewCount={menu.reviewCount}
+      />
 
-      <Box
-        sx={{
-          borderRadius: 4,
-          px: { xs: 2.5, sm: 4 },
-          py: { xs: 3, sm: 4 },
-          mb: 3,
-          backgroundColor: "#FAF7F2",
-          border: "1px solid",
-          borderColor: "divider",
-        }}
-      >
-        <Typography variant="h1">{menu.name}</Typography>
-        <Typography color="text.secondary" sx={{ mt: 0.75 }}>
-          {menu.cuisines.join(", ")}
-        </Typography>
-        <Box sx={{ mt: 1.25 }}>
-          <RatingStars rating={menu.ratingAvg} reviewCount={menu.reviewCount} />
-        </Box>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 1.5 }}>
-          <PlaceOutlinedIcon fontSize="small" sx={{ color: "text.secondary" }} />
-          <Typography variant="body2" color="text.secondary">
-            {menu.address}
-          </Typography>
-        </Box>
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, mt: 2 }}>
-          <Chip
-            label={
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                <ScheduleIcon sx={{ fontSize: 15 }} />
-                {`Ready in ${menu.pickupMinutes} mins`}
-              </Box>
-            }
-            size="small"
-            sx={{ backgroundColor: "#FFFFFF", border: "1px solid", borderColor: "divider" }}
-          />
-          <Chip
-            label="Pickup only"
-            size="small"
-            sx={{ backgroundColor: "#FFFFFF", border: "1px solid", borderColor: "divider" }}
-          />
-        </Box>
-      </Box>
+      <MenuReels cuisines={menu.cuisines} />
 
       {menu.categories.length > 1 && (
         <Box
@@ -96,7 +62,8 @@ export default async function RestaurantPage({
               href={`#category-${category.id}`}
               clickable
               label={category.name}
-              sx={{ flexShrink: 0 }}
+              variant="outlined"
+              sx={{ flexShrink: 0, borderColor: "primary.main", color: "primary.main", backgroundColor: "#FFFFFF" }}
             />
           ))}
         </Box>
@@ -126,6 +93,8 @@ export default async function RestaurantPage({
           </Box>
         ))}
       </Box>
+
+      <FloatingBasketButton />
     </Box>
   );
 }

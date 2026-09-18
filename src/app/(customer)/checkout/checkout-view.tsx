@@ -229,6 +229,12 @@ export function CheckoutView() {
                   onChange={(event) => setScheduleDate(event.target.value)}
                   slotProps={{
                     htmlInput: { min: dateBounds?.min, max: dateBounds?.max },
+                    // Without this, the floating label never shrinks out of
+                    // the way for a date/time input (unlike text inputs,
+                    // these always show their own native placeholder, e.g.
+                    // "dd-mm-yyyy"), so the label sits on top of it and both
+                    // render garbled together.
+                    inputLabel: { shrink: true },
                   }}
                 />
                 <TextField
@@ -239,6 +245,7 @@ export function CheckoutView() {
                   onChange={(event) => setScheduleTime(event.target.value)}
                   slotProps={{
                     htmlInput: { min: SCHEDULE_WINDOW_START, max: SCHEDULE_WINDOW_END },
+                    inputLabel: { shrink: true },
                   }}
                 />
               </Box>

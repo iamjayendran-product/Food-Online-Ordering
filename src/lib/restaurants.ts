@@ -27,6 +27,10 @@ export async function listRestaurants(query?: string, cuisine?: string): Promise
 
   const rows = await db.restaurant.findMany({
     where: {
+      // A restaurant with no photos would only ever show as a bare initials
+      // tile next to everyone else's real photos, so it's left out of
+      // discovery entirely rather than displayed as a placeholder.
+      images: { isEmpty: false },
       ...(trimmed ? { name: { contains: escapeLikePattern(trimmed), mode: "insensitive" } } : {}),
       ...(cuisine ? { cuisines: { has: cuisine } } : {}),
     },

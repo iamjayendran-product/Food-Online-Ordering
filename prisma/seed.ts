@@ -158,9 +158,7 @@ const restaurants: SeedRestaurant[] = [
     name: "Ponnusamy Hotel",
     cuisines: ["South Indian", "Chettinad"],
     address: "North Usman Road, T Nagar, Chennai",
-    // Deliberately photo-less: the discovery card and restaurant page must
-    // fall back to their placeholders and render no <img> element at all.
-    images: [],
+    images: [PHOTO.curry, PHOTO.biryaniAlt, PHOTO.streetFood],
     pickupMinutes: 25,
     ratingAvg: 4.5,
     reviewCount: 654,

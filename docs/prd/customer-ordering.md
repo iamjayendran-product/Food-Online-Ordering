@@ -105,7 +105,7 @@ Seeded customers log in with **email + password**. The session lasts 7 days; log
 #### P0-2: Restaurant discovery (F2)
 Anyone, logged in or not, can see and search the restaurant list.
 
-- **Given** any visitor, **when** they open the home page, **then** all restaurants appear alphabetically, each with name, cuisine tags and an image, or a placeholder when there's no image. [TC-2.1, TC-2.7]
+- **Given** any visitor, **when** they open the home page, **then** all restaurants **with a photo** appear alphabetically, each with name, cuisine tags and that photo. ~~or a placeholder when there's no image~~ **Superseded by F19 (2026-09-18):** a restaurant with no photos is excluded from discovery entirely rather than shown with a placeholder — see P0-7's note. [TC-2.1, TC-2.7]
 - Search by name matches partial, case-insensitive text; a blank search shows everything; special characters are matched literally, not as wildcards. [TC-2.2, TC-2.3, TC-2.6]
 - **When** a search matches nothing, **then** an empty state names the search term and offers a way to clear it. [TC-2.4]
 - The search term is kept in the URL, so it survives a reload, and Back returns to the unfiltered list. [TC-2.5]
@@ -161,7 +161,7 @@ Selecting a restaurant loads its menu.
 #### P0-7: Discovery and menu experience (F7)
 Presentation over the existing order flow. Nothing here changes pricing, availability or checkout.
 
-- Each store card shows a **photo carousel**. **Given** a restaurant with several photos, **when** the customer uses the next or previous control, **then** the photo changes and the customer stays on the discovery page. A restaurant with no photos shows a labelled initials tile and no image element at all. [TC-7.4, TC-2.7]
+- Each store card shows a **photo carousel**. **Given** a restaurant with several photos, **when** the customer uses the next or previous control, **then** the photo changes and the customer stays on the discovery page. ~~A restaurant with no photos shows a labelled initials tile and no image element at all.~~ **Superseded by F19 (2026-09-18):** `listRestaurants()` excludes any restaurant with no photos from discovery outright — every restaurant shown always has a real photo carousel. The initials-tile fallback (`RestaurantImage`) still exists in the component for defensiveness, but nothing in the seeded data can reach it any more. [TC-7.4, TC-2.7]
 - Each store card shows that restaurant's own **pickup time in minutes**. [TC-7.2]
 - Each store card shows a **star rating out of 5 with the number of reviews in brackets**, both per restaurant. [TC-7.1]
 - Each store card marks the kitchen **vegetarian or non-vegetarian**, using the same symbol as menu items. A restaurant counts as vegetarian only when every dish on its menu is. [TC-7.3]
@@ -178,7 +178,7 @@ Presentation over the existing discovery flow. Nothing here changes search resul
 - The search field's placeholder reads **"Search restaurants, items, cuisines..."**. Search still matches restaurant name only — the wording sets expectations for a future search expansion, not a behavior change here. [TC-8.1]
 - ~~Below the search field, a **campaigns marquee** auto-scrolls promotional headlines from a subset of restaurants. It pauses while hovered or focused.~~ **Superseded by P0-11 (2026-09-17):** the marquee was replaced by the promotional banner carousel, and the search field moved below it.
 - **Given** a store card carousel with several photos, **when** the customer hovers over it, **then** it automatically advances through the photos without a click. The existing click/keyboard arrows still work for touch and non-hover access. [TC-8.3]
-- **Given** a restaurant with photos, **when** its menu page loads, **then** a full-width hero banner above the name/rating/address block auto-advances through those photos. A restaurant with no photos shows no hero banner. [TC-8.5, TC-8.6]
+- **Given** a restaurant with photos, **when** its menu page loads, **then** a full-width hero banner above the name/rating/address block auto-advances through those photos. ~~A restaurant with no photos shows no hero banner.~~ **Superseded by F21 (2026-09-18):** the store name/rating/address moved onto the hero banner itself as a superimposed overlay (P0-15), so a photo-less restaurant now falls back to a solid brand-gradient banner instead of rendering nothing — the info panel still needs somewhere to sit. No photo `<img>` element renders in that case. [TC-8.5, TC-8.6]
 
 *Technical considerations:* the hero banner reuses `Restaurant.images` — the same photos already shown on the discovery card, not a separate field. Campaigns are seeded, decorative promotional text (a new `Campaign` model), not a real discounts/promotions system.
 
@@ -210,7 +210,7 @@ Replaces the discovery page's static banner and campaigns marquee with a promoti
 - Below the search field, a row of **category chips** (e.g. Biryani, Tiffin) lets a customer browse by cuisine, replacing the marquee's old position. **Given** a category chip, **when** clicked, **then** the restaurant grid filters to restaurants tagged with that cuisine; clicking the same chip again clears the filter; the filter combines with an active name search. [TC-11.6, TC-11.7, TC-11.8, TC-11.9]
 - Every restaurant on discovery shows a **real photo**. No restaurant is deliberately photo-less anymore except the one card that still exercises the no-photo fallback rendering path. [TC-11.4]
 
-*Technical considerations:* no new schema — this reuses `Campaign.imageUrl` (seeded but previously unused by the marquee) and the existing `Restaurant.cuisines` free-text tags (also already shown as chips on each card). `listRestaurants()` gains an optional cuisine filter alongside its existing name search. The Grand Sweets and Snacks now has real photos like every other restaurant. **Update (F15, 2026-09-17):** Pakwan also got real photos — **Ponnusamy Hotel** is now the one restaurant seeded with no photos, so TC-2.7/TC-8.6 still have something real to test.
+*Technical considerations:* no new schema — this reuses `Campaign.imageUrl` (seeded but previously unused by the marquee) and the existing `Restaurant.cuisines` free-text tags (also already shown as chips on each card). `listRestaurants()` gains an optional cuisine filter alongside its existing name search. The Grand Sweets and Snacks now has real photos like every other restaurant. **Update (F15, 2026-09-17):** Pakwan also got real photos — Ponnusamy Hotel became the one restaurant seeded with no photos, so TC-2.7/TC-8.6 still had something real to test. **Update (F19, 2026-09-18):** that pattern is retired — Ponnusamy Hotel now has real photos too, `listRestaurants()` excludes any photo-less restaurant from discovery outright, and TC-2.7/TC-8.6 construct a temporary photo-less fixture via `testDb` instead of relying on a permanently-bare seeded restaurant.
 
 #### P0-12: Discovery page polish (F15)
 Small refinements to the F14 discovery redesign, on top of the same carousel/chip/card mechanisms — no new pages or data model.
@@ -232,6 +232,25 @@ Reworks how the menu page presents items: no more Recommended shortcut, bigger a
 - Each category heading is colored distinctly from its neighbours, cycling a small set of brand colors. [TC-13.3]
 
 *Technical considerations:* `AddToBasketButton` now reads its own quantity from `useBasket()` instead of being a stateless one-shot button; the stepper reuses the exact control pattern already on the basket page (`increment`/`decrement`, same aria-label conventions). The photo lightbox is a small new client component (`MenuItemImage`) using a MUI `Dialog`, unmounted while closed so it never double-counts against `#menu-categories li img` assertions.
+
+#### P0-14: Discovery and global visual polish (F19)
+Removes a data gap in photo coverage and makes the brand color and interactive states actually read as branded rather than neutral-grey.
+
+- A restaurant with no photos is **excluded from discovery entirely** — see P0-2's superseded bullet. [TC-2.7]
+- Interactive hover, selected and focus states use a **tomato tint** instead of MUI's default grey, applied once at the theme level so it's consistent everywhere. [TC-14.1]
+- The ASAP/Schedule-for-later and Cash/Online payment toggles fill **solid tomato** when selected, instead of a pale grey highlight. [TC-14.2]
+- Menu item prices are colored in the brand tomato. [TC-14.3]
+
+*Technical considerations:* `theme.ts`'s `palette.action.hover/selected/focus` are overridden from MUI's defaults to tomato-tinted rgba values, so every component using the default hover/selected mechanism (buttons, list items, menu items) picks it up without individual overrides. `MuiToggleButton`'s `&.Mui-selected` gets an explicit solid-tomato override since the intensity needed there (a primary either/or choice) is stronger than a generic hover tint.
+
+#### P0-15: Menu page enhancements (F21)
+Three additions to the restaurant menu page: reachability, visual hierarchy, and a decorative content row.
+
+- **Given** a non-empty basket, **when** the customer is on a restaurant's menu page, **then** a floating basket button stays visible while scrolling, showing the item count and linking to `/basket`. [TC-15.1]
+- The store's name, rating, address and info chips are **superimposed directly on the hero banner photos** with a dark-to-transparent gradient scrim for legibility, replacing the previous stacked banner-then-card layout. [TC-15.2]
+- Directly below the store info, a horizontally-scrollable row of short **illustrated "reel" cards** (looping CSS/SVG animations — a wok toss, a tandoor flame, a steamer, plating/garnish, a dessert drizzle) suggests item-prep/social content per cuisine. Clearly decorative, not real video and not claimed to be the restaurant's actual social media. [TC-15.3]
+
+*Technical considerations:* the reel-card variant per restaurant is assigned by cuisine keyword, the same pattern `PHOTO_KEYWORDS` already uses for menu item photos — a small shared pool of illustrations, not unique content per restaurant. No new external assets or dependencies for any of the three.
 
 ### Nice-to-Have (P1)
 **None committed for v1.** The scope is deliberately tight. Anything proposed for v1 enters here only with a matching removal from P0 or an explicit timeline extension.
@@ -350,13 +369,13 @@ All test cases are automated with Playwright. **B** = browser test; **L** = logi
 ### TC-2: Restaurant discovery (P0-2)
 | ID | Type | Scenario | Expected |
 |---|---|---|---|
-| TC-2.1 | B | Open `/` logged out | All 10 restaurants, alphabetical, with name, cuisine tags, image or placeholder |
+| TC-2.1 | B | Open `/` logged out | All 10 restaurants, alphabetical, with name, cuisine tags, real photo |
 | TC-2.2 | L | Search "thalappakatti" | Only "Dindigul Thalappakatti" |
 | TC-2.3 | L | Search "   " and no search | All restaurants |
 | TC-2.4 | B | Search "pizza" | Empty state naming the term; clear link restores the list |
 | TC-2.5 | B | Search, reload, press Back | Search term kept on reload; Back shows the unfiltered list |
 | TC-2.6 | L | Search `%`, `_`, `'` | No error; empty result |
-| TC-2.7 | B | Restaurant without an image | Initials placeholder; no broken image |
+| TC-2.7 | L | `listRestaurants` with a temporary photo-less restaurant fixture | Excluded from the results |
 
 ### TC-3: Restaurant menu (P0-3)
 | ID | Type | Scenario | Expected |
@@ -430,7 +449,7 @@ All test cases are automated with Playwright. **B** = browser test; **L** = logi
 | TC-8.1 | B | Home page search field | Placeholder reads "Search restaurants, items, cuisines..." |
 | TC-8.3 | B | Hovering a card's carousel | The photo advances without a click, page stays put |
 | TC-8.5 | B | Opening a restaurant with photos | A hero banner above the name/rating/address block auto-advances |
-| TC-8.6 | B | Opening a restaurant with no photos | No hero banner element, no broken image |
+| TC-8.6 | B | Opening a restaurant with no photos | No banner photo `<img>` element, no broken image (gradient-fallback banner still hosts the store info) |
 
 ### TC-9: Pre-order (P0-9)
 | ID | Type | Scenario | Expected |
@@ -477,6 +496,20 @@ All test cases are automated with Playwright. **B** = browser test; **L** = logi
 | TC-13.1 | B | Click a menu item's photo, then Close | Larger photo opens; closes and removes the enlarged image |
 | TC-13.2 | B | Click Add, then +/− | Becomes a quantity stepper reflecting the basket count; reverts to Add at 0 |
 | TC-13.3 | B | A menu page with multiple categories | Category headings render in more than one distinct color |
+
+### TC-14: Discovery and global visual polish (P0-14)
+| ID | Type | Scenario | Expected |
+|---|---|---|---|
+| TC-14.1 | B | Hover an interactive element | Computed hover background is tomato-tinted, not MUI's default grey |
+| TC-14.2 | B | Select a pickup-time or payment-method toggle option | Selected button has a solid tomato background |
+| TC-14.3 | B | A menu item row | Price text is colored in the brand tomato |
+
+### TC-15: Menu page enhancements (P0-15)
+| ID | Type | Scenario | Expected |
+|---|---|---|---|
+| TC-15.1 | B | Add an item, scroll down the menu page | A floating basket button stays visible showing the item count, linking to `/basket` |
+| TC-15.2 | B | Open a restaurant's menu page | Store name/rating/address render over the hero photo with a gradient scrim |
+| TC-15.3 | B | Open a restaurant's menu page | A row of illustrated reel cards appears below the store info |
 
 ### TC-J: End-to-end journey (Goal 1)
 | ID | Type | Scenario | Expected |

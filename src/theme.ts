@@ -54,6 +54,19 @@ export const theme = createTheme({
     warning: { main: SUNSHINE, light: SUNSHINE_FILL, contrastText: INK },
     // Vegetarian marker and confirmation states — the role green already played.
     success: { main: FOREST },
+    // MUI's own defaults here are neutral grey (rgba(0,0,0,...)), which is
+    // why hover/selected states read as generic rather than branded.
+    // Overriding once at the theme level covers every component that uses
+    // the default interaction-state mechanism (buttons, list/menu items,
+    // chips) without touching each one individually.
+    action: {
+      hover: "rgba(196, 58, 47, 0.06)",
+      hoverOpacity: 0.06,
+      selected: "rgba(196, 58, 47, 0.12)",
+      selectedOpacity: 0.12,
+      focus: "rgba(196, 58, 47, 0.16)",
+      focusOpacity: 0.16,
+    },
   },
   shape: { borderRadius: 12 },
   typography: {
@@ -107,6 +120,19 @@ export const theme = createTheme({
     MuiChip: {
       styleOverrides: {
         root: { borderRadius: 999, backgroundColor: TOMATO_TINT, color: INK_MUTED },
+      },
+    },
+    MuiToggleButton: {
+      styleOverrides: {
+        root: {
+          textTransform: "none",
+          fontWeight: 600,
+          "&.Mui-selected": {
+            backgroundColor: TOMATO,
+            color: "#FFFFFF",
+            "&:hover": { backgroundColor: TOMATO_DARK },
+          },
+        },
       },
     },
     MuiOutlinedInput: {

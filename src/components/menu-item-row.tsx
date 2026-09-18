@@ -45,7 +45,7 @@ export function MenuItemRow({
               {item.description}
             </Typography>
           )}
-          <Typography sx={{ mt: 0.75, fontWeight: 600 }}>
+          <Typography sx={{ mt: 0.75, fontWeight: 600, color: "primary.main" }}>
             {formatInr(item.pricePaise)}
           </Typography>
           {!item.isAvailable && (

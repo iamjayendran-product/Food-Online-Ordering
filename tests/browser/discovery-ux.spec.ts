@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { testDb } from "../support/db";
 
 test("TC-8.1 the search field's placeholder invites searching items and cuisines too", async ({ page }) => {
   await page.goto("/");
@@ -48,7 +49,29 @@ test("TC-8.5 a restaurant with photos shows an auto-advancing hero banner", asyn
 });
 
 test("TC-8.6 a restaurant with no photos shows no hero banner", async ({ page }) => {
-  await page.goto("/restaurants/ponnusamy-hotel");
+  // Every seeded restaurant has photos now (F19) — a photo-less one is
+  // excluded from discovery entirely, but its own page must still degrade
+  // gracefully if reached directly, so this constructs one to prove that.
+  const restaurant = await testDb.restaurant.create({
+    data: {
+      slug: "temp-no-photo-restaurant-page",
+      name: "Zzz Temp No Photo Restaurant Page",
+      cuisines: ["Test"],
+      address: "Test Address, T Nagar, Chennai",
+      images: [],
+    },
+  });
+  try {
+    await page.goto(`/restaurants/${restaurant.slug}`);
+    await expect(page.getByRole("img", { name: /banner photo/ })).toHaveCount(0);
 
-  await expect(page.getByRole("img", { name: /banner photo/ })).toHaveCount(0);
+    // The gradient-fallback banner must still host the store info, not
+    // render an empty gap.
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Zzz Temp No Photo Restaurant Page" }),
+    ).toBeVisible();
+    await expect(page.getByText("Test Address, T Nagar, Chennai")).toBeVisible();
+  } finally {
+    await testDb.restaurant.delete({ where: { id: restaurant.id } });
+  }
 });

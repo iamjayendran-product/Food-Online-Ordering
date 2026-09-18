@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { testDb } from "../support/db";
 import { listRestaurants } from "../../src/lib/restaurants";
 
 test("TC-2.2 search matches partial, case-insensitive text", async () => {
@@ -14,6 +15,25 @@ test("TC-2.3 a blank search or no search returns everything", async () => {
   const none = await listRestaurants(undefined);
   expect(blank.length).toBe(10);
   expect(none.length).toBe(10);
+});
+
+test("TC-2.7 a restaurant with no photos is excluded from discovery", async () => {
+  const restaurant = await testDb.restaurant.create({
+    data: {
+      slug: "temp-no-photo-restaurant",
+      name: "Zzz Temp No Photo Restaurant",
+      cuisines: ["Test"],
+      address: "Test Address, T Nagar, Chennai",
+      images: [],
+    },
+  });
+  try {
+    const results = await listRestaurants();
+    expect(results.some((r) => r.id === restaurant.id)).toBe(false);
+    expect(results.length).toBe(10);
+  } finally {
+    await testDb.restaurant.delete({ where: { id: restaurant.id } });
+  }
 });
 
 test("TC-2.6 special characters are matched literally, not as wildcards", async () => {

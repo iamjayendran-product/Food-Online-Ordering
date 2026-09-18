@@ -3,10 +3,21 @@ import Typography from "@mui/material/Typography";
 import StarIcon from "@mui/icons-material/Star";
 import StarHalfIcon from "@mui/icons-material/StarHalf";
 import StarBorderIcon from "@mui/icons-material/StarBorder";
+import { brand } from "@/theme";
 
 const MAX_STARS = 5;
 
-export function RatingStars({ rating, reviewCount }: { rating: number; reviewCount: number }) {
+// `onDark`: for use over a photo with a gradient scrim (the menu page's
+// hero), where the default ink/warning colors don't have enough contrast.
+export function RatingStars({
+  rating,
+  reviewCount,
+  onDark = false,
+}: {
+  rating: number;
+  reviewCount: number;
+  onDark?: boolean;
+}) {
   const rounded = Math.round(rating * 2) / 2;
 
   return (
@@ -17,7 +28,7 @@ export function RatingStars({ rating, reviewCount }: { rating: number; reviewCou
       role="img"
       aria-label={`Rated ${rating} out of 5 from ${reviewCount} reviews`}
     >
-      <Box sx={{ display: "flex", color: "warning.main" }}>
+      <Box sx={{ display: "flex", color: onDark ? brand.sunshineFill : "warning.main" }}>
         {Array.from({ length: MAX_STARS }, (_, index) => {
           const position = index + 1;
           if (rounded >= position) return <StarIcon key={position} sx={{ fontSize: 16 }} />;
@@ -25,10 +36,14 @@ export function RatingStars({ rating, reviewCount }: { rating: number; reviewCou
           return <StarBorderIcon key={position} sx={{ fontSize: 16 }} />;
         })}
       </Box>
-      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+      <Typography variant="body2" sx={{ fontWeight: 600, color: onDark ? "#FFFFFF" : undefined }}>
         {rating.toFixed(1)}
       </Typography>
-      <Typography variant="body2" color="text.secondary">
+      <Typography
+        variant="body2"
+        color={onDark ? undefined : "text.secondary"}
+        sx={onDark ? { color: "rgba(255, 255, 255, 0.85)" } : undefined}
+      >
         ({reviewCount})
       </Typography>
     </Box>

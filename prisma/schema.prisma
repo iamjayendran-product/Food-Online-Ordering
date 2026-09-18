@@ -27,9 +27,11 @@ model Restaurant {
   name    String
   cuisines String[]
   address String
-  // Several photos per restaurant, shown as a carousel on the discovery card.
-  // An empty array means the card falls back to its initials tile and renders
-  // no <img> at all.
+  // Several photos per restaurant, shown as a carousel on the discovery card
+  // and superimposed on the menu page's hero banner. An empty array excludes
+  // the restaurant from discovery entirely (see `listRestaurants()`); its own
+  // menu page still renders directly, falling back to a solid brand-gradient
+  // banner with no <img> at all.
   images   String[]
   // Advertised pickup wait, in minutes.
   pickupMinutes Int   @default(15)

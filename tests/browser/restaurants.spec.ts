@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-test("TC-2.1 the home page lists all restaurants alphabetically with cuisine tags and an image or placeholder", async ({ page }) => {
+test("TC-2.1 the home page lists all restaurants alphabetically with cuisine tags and a photo", async ({ page }) => {
   await page.goto("/");
 
   const headings = page.getByRole("heading", { level: 2 });
@@ -13,6 +13,11 @@ test("TC-2.1 the home page lists all restaurants alphabetically with cuisine tag
   await expect(
     page.getByRole("link", { name: /Dindigul Thalappakatti/ }).getByText("Biryani", { exact: true }),
   ).toBeVisible();
+
+  // Every restaurant now has a real photo (F19) — a photo-less one is
+  // excluded from discovery entirely rather than shown with a placeholder.
+  const cards = page.locator("main a img");
+  expect(await cards.count()).toBeGreaterThanOrEqual(10);
 });
 
 test("TC-2.4 a search with no results shows an empty state with a clear link", async ({ page }) => {
@@ -43,10 +48,3 @@ test("TC-2.5 the search term survives a reload; Back returns to the unfiltered l
   await expect(page.getByRole("heading", { name: "The Grand Sweets and Snacks" })).toBeVisible();
 });
 
-test("TC-2.7 a restaurant without an image shows an initials placeholder, not a broken image", async ({ page }) => {
-  await page.goto("/");
-  const card = page.getByRole("link", { name: /Ponnusamy Hotel/ });
-
-  await expect(card.getByRole("img", { name: "Ponnusamy Hotel" })).toBeVisible();
-  await expect(card.locator("img")).toHaveCount(0);
-});
