@@ -58,13 +58,13 @@ test("TC-10.5 the confirmation page shows a simulated kitchen view with a LIVE b
   ).toBeVisible();
 });
 
-test("TC-10.6 the kitchen view shows a real chef photo, not just an illustration", async ({ page }) => {
+test("TC-10.6 the kitchen view shows a real, looping cooking clip, not just an illustration", async ({ page }) => {
   await addChickenBiryaniToBasket(page);
   await loginAs(page, "priya@example.com");
   await page.goto("/checkout");
   await page.getByRole("button", { name: "Place order" }).click();
   await expect(page).toHaveURL(/\/orders\/.+/);
 
-  const kitchenPhoto = page.locator('img[src="/images/kitchen-chef.jpg"]');
+  const kitchenPhoto = page.locator('img[src="/images/kitchen-masterchef.gif"]');
   await expect(kitchenPhoto).toBeVisible();
 });

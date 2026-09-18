@@ -4,12 +4,16 @@ import Chip from "@mui/material/Chip";
 import Typography from "@mui/material/Typography";
 
 // A stand-in for a real kitchen camera feed, which this project has no way
-// to provide. `/images/kitchen-chef.jpg` is a single photo downloaded once
-// and committed as a static asset (not a live hotlink) so it can't silently
-// rot or resolve to the wrong picture the way a seeded Unsplash URL can —
-// see the F26 bug fix. A slow pan/zoom plus a CSS steam overlay give it
-// motion without pretending it's a real feed; it's still clearly labeled
-// simulated, in the same spirit as the checkout page's simulated payment.
+// to provide. `/images/kitchen-masterchef.gif` (F30) is a single GIF
+// downloaded once from Giphy and committed as a static asset — not a live
+// hotlink to Giphy's CDN — so it can't silently rot or resolve to the wrong
+// clip the way a seeded Unsplash URL once did (see the F26 bug fix). It's
+// sourced from MasterChef Australia, so self-hosting this one copy (rather
+// than redistributing it more widely) is the deliberate choice here. The
+// GIF is encoded with an infinite Netscape loop count, confirmed by
+// inspecting its bytes, so a plain <img> loops it forever with no extra
+// code. Still clearly labeled simulated, in the same spirit as the
+// checkout page's simulated payment.
 export function KitchenCam({ restaurantName }: { restaurantName: string }) {
   return (
     <Card sx={{ p: 3, mt: 3 }}>
@@ -49,7 +53,7 @@ export function KitchenCam({ restaurantName }: { restaurantName: string }) {
       >
         <Box
           component="img"
-          src="/images/kitchen-chef.jpg"
+          src="/images/kitchen-masterchef.gif"
           alt=""
           sx={{
             position: "absolute",
@@ -58,35 +62,8 @@ export function KitchenCam({ restaurantName }: { restaurantName: string }) {
             height: "100%",
             objectFit: "cover",
             objectPosition: "center 30%",
-            animation: "foodlicious-kitchen-pan 14s ease-in-out infinite",
-            "@keyframes foodlicious-kitchen-pan": {
-              "0%, 100%": { transform: "scale(1.05) translate(0, 0)" },
-              "50%": { transform: "scale(1.15) translate(-1.5%, -1%)" },
-            },
           }}
         />
-
-        {/* Steam drifting up from the pass, on top of the photo */}
-        {[0, 1, 2].map((index) => (
-          <Box
-            key={index}
-            sx={{
-              position: "absolute",
-              bottom: "42%",
-              left: `${30 + index * 14}%`,
-              width: 10,
-              height: 10,
-              borderRadius: "50%",
-              backgroundColor: "#FFFFFF",
-              opacity: 0,
-              animation: `foodlicious-steam 2.6s ease-in ${index * 0.5}s infinite`,
-              "@keyframes foodlicious-steam": {
-                "0%": { transform: "translateY(0) scale(1)", opacity: 0.55 },
-                "100%": { transform: "translateY(-46px) scale(1.6)", opacity: 0 },
-              },
-            }}
-          />
-        ))}
       </Box>
     </Card>
   );

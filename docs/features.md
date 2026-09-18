@@ -43,6 +43,7 @@ This is the single place to see what's being built, in what order, and where eac
 | F27 | Default checkout payment method to cash | P0-10 (revised) | F13 | TC-5.4, TC-10.1 (revised) | **Done** | PASS (round 2/2) | 2026-09-18 |
 | F28 | Confetti animation on order confirmation | P0-6 (revised) | F6 | TC-6.17 (1) | **Done** | PASS (round 2/2) | 2026-09-18 |
 | F29 | Real chef photo in the kitchen view | P0-10 (revised) | F13, F22 | TC-10.6 (1) | **Done** | PASS (round 2/2) | 2026-09-18 |
+| F30 | Kitchen view: real looping cooking clip (replaces the static photo) | P0-10 (revised) | F29 | TC-10.6 (revised) | **Done** | PASS (round 1/1) | 2026-09-18 |
 
 **Build order:** F0 → F1 → F2 → F3 → F4 → F5 → F6, one feature per cycle. F7, the Material UI redesign, and the Foodlicious relaunch (F8 onward) followed as owner-requested work after v1 shipped — see `docs/superpowers/specs/2026-09-16-foodlicious-relaunch-design.md` and its plan.
 
@@ -300,6 +301,7 @@ Reviewer: `PASS` on the first round for both F5 and F6 — no additional defects
 | 2026-09-18 | F23: owner reviewed the app and asked to remove the "From the kitchen" reels row from the menu page (shipped in F21 the same day). Removed `menu-reels.tsx`, its usage, TC-15.3 (test, PRD bullet, Appendix B row — marked superseded rather than silently deleted), and TC-3.1's now-stale expected heading list. P0-15 keeps its other two items (floating basket button, hero info overlay). |
 | 2026-09-18 | Owner requested a 6-item batch: guest checkout, a mobile-responsiveness pass, a menu-item photo bug fix, defaulting checkout payment to cash, a confetti animation on order confirmation, and a real chef photo in the kitchen view. Asked one upfront clarifying question — the kitchen-photo ask directly conflicted with the F19-F22 decision to avoid hotlinked media — before building continuously as F24-F29. |
 | 2026-09-18 | F24 (guest checkout, P0-16) + F25 (mobile responsiveness, P0-17) + F26 (photo bug fix, revises P0-7) + F27 (cash default, revises P0-10) + F28 (confetti, revises P0-6) + F29 (chef photo, revises P0-10) built together. Two real bugs found and fixed (not planted) — see the F24-F29 section below for detail. Reviewer round 1 FIXED a test-coverage gap (TC-16.1 didn't verify the login form was replaced, not just supplemented); round 2 PASS. Full Playwright suite 115/115; `lint`/`tsc`/`tc:check`/`next build` clean. Signed off. |
+| 2026-09-18 | Owner asked to replace the kitchen-view photo with a specific Giphy GIF (MasterChef Australia), looping infinitely. This directly conflicted with the F29 decision made earlier the same session ("download once and self-host, never a live hotlink") and introduced a new consideration F29 didn't have — the source is copyrighted TV footage, not generic stock. Asked upfront: the owner chose to keep both the no-hotlink preference *and* use the exact requested clip — download this one GIF and self-host it, same as F29's approach, just with a GIF instead of a photo. Built as F30 (revises P0-10 again). Reviewer PASS, round 1 — independently parsed the GIF's bytes to confirm the infinite-loop claim rather than trusting the log. Full Playwright suite 115/115. Signed off. |
 
 ---
 
@@ -532,3 +534,23 @@ A same-day 6-item follow-up on top of F23, built continuously as six small featu
 **Independent review:**
 - **Round 1 — FIXED.** One defect: TC-16.1 (`guest-login.spec.ts`) asserted the guest Name field appeared after switching modes, but never asserted the Email/Password fields actually disappeared — the PRD's own Expected column says the guest form **replaces** the login form, not that it appears alongside it. A regression showing both forms at once would have passed unnoticed. Test-only fix; `login-form.tsx`'s mode toggle already replaces one form with the other correctly.
 - **Round 2 — PASS**, from a fresh reviewer with no knowledge of round 1: no defects found. `lint`/`tsc`/`tc:check`/`build`/115 tests all clean. Independently re-verified the F26 photo fix and the F29 kitchen photo by downloading and visually inspecting both image files itself, rather than trusting this log's account.
+
+---
+
+## F30: Kitchen view — real cooking clip (2026-09-18)
+
+Same-day follow-up on F29: the owner asked to use a specific Giphy GIF (MasterChef Australia) for the kitchen view instead of the static chef photo, looping infinitely.
+
+**Decision taken with the owner**
+- This directly conflicted with F29's own decision from earlier the same session — download once, self-host, never a live hotlink — and added a new wrinkle F29 didn't have: the source is copyrighted TV footage (MasterChef Australia), not generic stock. Asked upfront rather than silently picking a side. The owner chose to keep both: download this exact GIF and self-host it as a static asset, the same pattern F29 already established, just with a GIF instead of a JPEG.
+
+**What changed**
+- Downloaded and visually inspected the GIF (`https://media.giphy.com/media/dAfQRqjamiwguA81Iv/giphy.gif`, resolved from the given `giphy.com` page URL) before using it — confirmed it's genuinely a MasterChef stove-top cooking scene, not a mismatched or dead link.
+- Committed as `public/images/kitchen-masterchef.gif` (4.7MB); the superseded `kitchen-chef.jpg` was deleted, not left as dead weight.
+- `kitchen-cam.tsx`: swapped the `<img>` src to the GIF and removed the CSS pan/zoom and steam-overlay animations that existed to fake motion on a static photo — the GIF already has real motion, so layering simulated motion on top of it would look wrong, not additive.
+- "Loop infinitely" needed no extra code: inspected the GIF's own bytes for the Netscape application extension block and confirmed its loop-count field is `0` (infinite) — standard for Giphy exports. A plain `<img>` honors that natively.
+- TC-10.6 updated to check for the new filename; its title changed from "real chef photo" to "real, looping cooking clip" to describe what's actually there now.
+
+**Verification:** `lint`/`tsc`/`tc:check`/`next build` clean; full Playwright suite 115/115.
+
+**Independent review:** **PASS, round 1/1.** The reviewer parsed the GIF's own bytes independently (not trusting this log) and confirmed the Netscape loop-count field is genuinely `0` (infinite); confirmed no leftover reference to the deleted `kitchen-chef.jpg` anywhere in code, tests, or static assets. No defects found.
