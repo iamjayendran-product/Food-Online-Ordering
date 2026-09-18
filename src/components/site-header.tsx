@@ -37,7 +37,16 @@ export async function SiteHeader() {
 
           {user ? (
             <>
-              <Typography variant="body2" color="text.secondary">
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{
+                  maxWidth: { xs: 84, sm: 160 },
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
                 Hi {user.name.split(" ")[0]}
               </Typography>
               <form action={logout} style={{ display: "flex" }}>

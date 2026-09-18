@@ -154,6 +154,7 @@ Selecting a restaurant loads its menu.
   - a payment line and the time placed (IST) — see P0-10 for its exact wording, which depends on the payment method chosen
 
   [TC-6.9, TC-6.12]
+- A brief **confetti animation** plays around the confirmation checkmark on load (F28, 2026-09-18) — purely celebratory, no effect on order data. [TC-6.17]
 - The confirmation has its own address. It can be reloaded, and only the customer who placed the order can see it. Other customers and failed orders get "not found"; a logged-out visitor is asked to log in and then returned to it. [TC-6.13–TC-6.16]
 
 *Technical considerations:* the server is authoritative on price, availability and totals. Payment is behind a provider interface so a real gateway can replace the simulation. The charge happens outside the database transaction. *Dependencies:* P0-5.
@@ -167,6 +168,7 @@ Presentation over the existing order flow. Nothing here changes pricing, availab
 - Each store card marks the kitchen **vegetarian or non-vegetarian**, using the same symbol as menu items. A restaurant counts as vegetarian only when every dish on its menu is. [TC-7.3]
 - Each store card carries a **favourite control**. **Given** a signed-in customer, **when** they favourite a restaurant, **then** it is still favourited after a reload, and only for that customer. A logged-out visitor is sent to log in instead. [TC-7.5, TC-7.6]
 - Every **menu item shows a photo**. [TC-7.7]
+- **Given** a menu item's photo fails to load, **then** it is removed entirely — no broken-image icon (F26, 2026-09-18). Fixes a real bug: a seeded photo URL can 200 and still be the wrong picture, as happened with Ratna Cafe's "Tea" resolving to an unrelated portrait photo — the underlying seed data is corrected, and this is the defensive runtime backstop for the next time a URL silently stops being right. [TC-7.10]
 - ~~The menu opens with a **Recommended** section of the kitchen's picks, above the full menu.~~ **Removed by F16 (2026-09-17):** the Recommended section, `MenuItem.isRecommended`, and its test were deleted at the owner's request. The menu now opens directly on its categories.
 - The application is named **Foodlicious**. [TC-7.9]
 
@@ -194,12 +196,12 @@ Checkout can schedule pickup for later instead of ASAP.
 #### P0-10: Payment method and kitchen view (F13)
 Checkout offers a real choice of how the customer pays; the confirmation page adds a simulated view into the kitchen.
 
-- **Given** the checkout page, **when** the customer views the Payment card, **then** they see two buttons, **"Pay in cash"** and **"Pay later online"**, with online selected by default. [TC-10.1]
+- **Given** the checkout page, **when** the customer views the Payment card, **then** they see two buttons, **"Pay in cash"** and **"Pay later online"**, ~~with online selected by default~~ **changed by F27 (2026-09-18): cash is selected by default** — pickup orders are commonly paid at the counter, and it removes a step for the common case. [TC-10.1]
 - **Given** "Pay in cash" is selected, **when** the customer places the order, **then** no payment charge is attempted, the order is placed outright, the pay button reads "Place order", and the confirmation page shows "Payment: Pay ₹X in cash at pickup". [TC-10.2, TC-10.3]
 - **Given** "Pay later online" is selected, **then** the pay button reads "Pay ₹X". The confirmation page shows "Payment: Paid online (simulated)". ~~The existing simulated success/failure sub-choice is shown~~ **Removed by F18 (2026-09-17)** — see P0-6's Goal 3 note. [TC-10.4]
-- The confirmation page shows a **simulated kitchen view** — an animated illustration, not a real feed — labelled "Simulated live view — `<restaurant name>`'s kitchen" with a "LIVE" badge. [TC-10.5]
+- The confirmation page shows a **simulated kitchen view** — labelled "Simulated live view — `<restaurant name>`'s kitchen" with a "LIVE" badge — showing a real photo of a chef cooking with a subtle pan/zoom and steam overlay for motion. ~~an animated illustration, not a real feed~~ **Changed by F29 (2026-09-18):** the photo is a single image downloaded once and committed as a static asset (`/images/kitchen-chef.jpg`), not a live hotlink, so it can't rot or resolve to the wrong picture the way a seeded Unsplash URL can (see P0-7's F26 note) — it's still clearly labeled simulated, not a real feed. [TC-10.5, TC-10.6]
 
-*Technical considerations:* `Order.paymentMethod` (`CASH` | `ONLINE`) is a real field, not a copy-only change — a cash order is created with `status: "PLACED"` directly, skipping the `PENDING_PAYMENT` step and the payment provider entirely, since there is nothing to charge. The kitchen view has no backing data or camera; it's a client-side animation that takes only the restaurant's name.
+*Technical considerations:* `Order.paymentMethod` (`CASH` | `ONLINE`) is a real field, not a copy-only change — a cash order is created with `status: "PLACED"` directly, skipping the `PENDING_PAYMENT` step and the payment provider entirely, since there is nothing to charge. The kitchen view has no backing data or camera; it's a client-side component that takes only the restaurant's name and a static local photo — no external request at runtime.
 
 #### P0-11: Discovery page redesign — promotional carousel, category browse, full photo coverage (F14)
 Replaces the discovery page's static banner and campaigns marquee with a promotional carousel, adds a category browse strip, and gives every restaurant a real photo.
@@ -251,6 +253,26 @@ Two additions to the restaurant menu page: reachability and visual hierarchy.
 - ~~Directly below the store info, a horizontally-scrollable row of short illustrated "reel" cards (looping CSS/SVG animations — a wok toss, a tandoor flame, a steamer, plating/garnish, a dessert drizzle) suggests item-prep/social content per cuisine.~~ **Removed by F23 (2026-09-18)** at the owner's request, same day it shipped. `menu-reels.tsx` and TC-15.3 were deleted.
 
 *Technical considerations:* no new external assets or dependencies for either remaining item.
+
+#### P0-16: Guest checkout (F24)
+Anyone can place a pickup order without creating an account.
+
+- **Given** the login page, **when** a visitor selects **"Continue as Guest"**, **then** a Name field replaces the email/password form. [TC-16.1]
+- **Given** the guest form, **when** they enter a name and continue, **then** they're signed in — no email or password is collected — and returned to where they came from (checkout, if that's what sent them to log in, or home otherwise), the same as a registered login. [TC-16.2]
+- A blank name is rejected with a field error; nothing is created. [TC-16.3]
+- A guest can complete an entire checkout through to the order confirmation page exactly like a registered customer — basket, pricing, payment method and the confirmation page make no distinction. [TC-16.4]
+- This is **not** a sign-up: a guest has no credentials and cannot log back in as that identity later. ~~There is no sign-up or "forgot password" option~~ (P0-1) still holds for *registered* accounts; guest checkout is a separate, parallel path that skips accounts entirely, not an exception to it.
+
+*Technical considerations:* `User.email`/`User.passwordHash` become nullable and a new `User.isGuest` flag marks guest rows, so a guest is still a real row with a real id — every order needs a valid owner. `continueAsGuest` reuses the exact same session mechanism as `login` (`createSession(user.id)`), so every existing auth-gated code path (`requireUser`, `proxy.ts`'s route protection, order ownership checks) works unchanged for guests with no special-casing. *Dependencies:* P0-1 (extends the login page), P0-5 (checkout).
+
+#### P0-17: Mobile responsiveness (F25)
+A pass over the existing pages and components fixing layout that didn't hold up on narrow phone widths — no new pages, no behavior change.
+
+- At phone widths (down to 320px), no page produces horizontal overflow — nothing requires a horizontal scrollbar or gets clipped off the right edge. [TC-17.1]
+- The promotional banner headline (pinned to one line since P0-12) shrinks fluidly with viewport width instead of only at a few fixed breakpoints, so it always fits instead of being cut off at in-between widths. [TC-17.2]
+- The header's signed-in greeting truncates with an ellipsis instead of wrapping mid-word or overflowing when the name is long. [TC-17.3]
+
+*Technical considerations:* `BannerCarousel`'s headline font size uses `clamp()` instead of discrete `sx` breakpoint steps, so it scales continuously with `vw` rather than jumping between fixed sizes. `SiteHeader`'s greeting gets a bounded `maxWidth` with `text-overflow: ellipsis`. Checked empirically with a headless browser at 320/360/375/414px against the home, restaurant menu, basket and checkout pages, logged in and as a guest.
 
 ### Nice-to-Have (P1)
 **None committed for v1.** The scope is deliberately tight. Anything proposed for v1 enters here only with a matching removal from P0 or an explicit timeline extension.
@@ -410,7 +432,7 @@ All test cases are automated with Playwright. **B** = browser test; **L** = logi
 | TC-5.1 | B | Guest with a basket clicks Checkout | Sent to `/login?next=/checkout`; after login, on checkout with basket intact |
 | TC-5.2 | B | Checkout contents | Restaurant name and address, "Pickup only", items, subtotal, GST 5%, total matching the basket |
 | TC-5.3 | B | Open `/checkout` with an empty basket | Redirected to the basket page |
-| TC-5.4 | B | Payment panel | Online payment selected by default; button reads "Pay ₹651" |
+| TC-5.4 | B | Payment panel | Cash payment selected by default (F27); button reads "Place order" |
 | TC-5.5 | B | Double-click Pay | Button disabled while processing; exactly one new order |
 
 ### TC-6: Place order and confirmation (P0-6)
@@ -430,6 +452,7 @@ All test cases are automated with Playwright. **B** = browser test; **L** = logi
 | TC-6.14 | B | Another customer (Arjun) opens Priya's confirmation | Not found |
 | TC-6.15 | B | Logged-out visitor opens a confirmation URL | Asked to log in, then returned to the confirmation |
 | TC-6.16 | B | Open the URL of a payment-failed order | Not found |
+| TC-6.17 | B | View confirmation | A brief confetti animation plays around the checkmark |
 
 ### TC-7: Discovery and menu experience (P0-7)
 | ID | Type | Scenario | Expected |
@@ -442,6 +465,7 @@ All test cases are automated with Playwright. **B** = browser test; **L** = logi
 | TC-7.6 | B | Logged-out visitor clicks favourite | Sent to the login page; nothing is favourited |
 | TC-7.7 | B | Menu items | Every row inside `#menu-categories` has exactly one photo |
 | TC-7.9 | B | Branding | Page title and header wordmark both read Foodlicious |
+| TC-7.10 | B | A menu item's photo request fails to load | No broken-image icon; the photo control is removed entirely |
 
 ### TC-8: Discovery page UX (P0-8)
 | ID | Type | Scenario | Expected |
@@ -462,11 +486,12 @@ All test cases are automated with Playwright. **B** = browser test; **L** = logi
 ### TC-10: Payment method and kitchen view (P0-10)
 | ID | Type | Scenario | Expected |
 |---|---|---|---|
-| TC-10.1 | B | Open checkout | Payment card shows "Pay in cash" and "Pay later online" buttons, online selected by default |
+| TC-10.1 | B | Open checkout | Payment card shows "Pay in cash" and "Pay later online" buttons, cash selected by default |
 | TC-10.2 | B | Select "Pay in cash", place order | Confirmation shows "Payment: Pay ₹273 in cash at pickup" |
 | TC-10.3 | L | `placeOrder` with `paymentMethod: "CASH"` and `simulateSuccess: false` | Order placed outright (`PLACED`), no payment provider called, `paymentRef` null |
 | TC-10.4 | B | Toggle between cash and online | Pay button label switches between "Place order" and "Pay ₹X" |
 | TC-10.5 | B | View confirmation | "Kitchen view" heading, "LIVE" badge, "Simulated live view — `<restaurant>`'s kitchen" label |
+| TC-10.6 | B | View confirmation | Kitchen view shows a photo (`<img>` element, `/images/kitchen-chef.jpg`), not just an illustration |
 
 ### TC-11: Discovery page redesign (P0-11)
 | ID | Type | Scenario | Expected |
@@ -509,6 +534,21 @@ All test cases are automated with Playwright. **B** = browser test; **L** = logi
 |---|---|---|---|
 | TC-15.1 | B | Add an item, scroll down the menu page | A floating basket button stays visible showing the item count, linking to `/basket` |
 | TC-15.2 | B | Open a restaurant's menu page | Store name/rating/address render over the hero photo with a gradient scrim |
+
+### TC-16: Guest checkout (P0-16)
+| ID | Type | Scenario | Expected |
+|---|---|---|---|
+| TC-16.1 | B | Login page, click "Continue as Guest" | A Name field and its own submit button replace the email/password form |
+| TC-16.2 | B | Enter a name, continue as guest, from `/login?next=/checkout` | Signed in; returned to `/checkout`; header shows a greeting |
+| TC-16.3 | B | Submit the guest form with a blank name | Field error shown; no session created |
+| TC-16.4 | B | Continue as guest, add an item, check out, pay | Reaches the order confirmation page with correct items and total |
+
+### TC-17: Mobile responsiveness (P0-17)
+| ID | Type | Scenario | Expected |
+|---|---|---|---|
+| TC-17.1 | B | Home, menu, basket and checkout pages at a 320px viewport | `document.documentElement.scrollWidth` does not exceed the viewport width on any of them |
+| TC-17.2 | B | Promo banner headline at a 320px viewport | Its right edge does not exceed the viewport width |
+| TC-17.3 | B | Signed in with a long single-word name, 320px viewport | Header row has no horizontal overflow; the greeting is truncated |
 
 ### TC-J: End-to-end journey (Goal 1)
 | ID | Type | Scenario | Expected |

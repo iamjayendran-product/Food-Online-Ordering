@@ -131,7 +131,11 @@ export function BannerCarousel({ campaigns }: { campaigns: CampaignItem[] }) {
               fontFamily: "var(--font-space-grotesk), var(--font-geist-sans), system-ui, sans-serif",
               fontWeight: 700,
               letterSpacing: "-0.01em",
-              fontSize: { xs: "1.05rem", sm: "1.6rem", md: "2.125rem" },
+              // A fluid clamp(), not discrete breakpoint steps: the headline
+              // is pinned to one line (TC-12.1), so at any width in between
+              // the steps it has to keep shrinking continuously or it
+              // overflows the banner instead of wrapping.
+              fontSize: "clamp(0.62rem, 3.6vw, 2.125rem)",
               animation: "foodlicious-promo-pulse 1.8s ease-in-out infinite",
               "@keyframes foodlicious-promo-pulse": {
                 "0%, 100%": { transform: "scale(1)" },

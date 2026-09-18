@@ -9,6 +9,10 @@ const prisma = new PrismaClient({ adapter });
 // Every URL below was checked to return HTTP 200 when this seed was written.
 // Photos are assigned by keyword rather than hand-mapped per dish, so adding a
 // menu item can't silently leave it without a picture.
+// A 200 isn't proof the photo is actually of the dish, though: the original
+// `chai` URL 200'd but was a portrait of a person, not a drink (F26 bug fix,
+// spotted on Ratna Cafe's "Tea"). The replacement below was downloaded and
+// visually checked, not just status-code checked.
 const PHOTO = {
   biryani: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8",
   biryaniAlt: "https://images.unsplash.com/photo-1631452180519-c014fe946bc7",
@@ -24,7 +28,7 @@ const PHOTO = {
   dessert: "https://images.unsplash.com/photo-1565958011703-44f9829ba187",
   coffee: "https://images.unsplash.com/photo-1461023058943-07fcbe16d735",
   coffeeAlt: "https://images.unsplash.com/photo-1509042239860-f550ce710b93",
-  chai: "https://images.unsplash.com/photo-1613145997970-db84a7975fbb",
+  chai: "https://images.unsplash.com/photo-1544787219-7f47ccb76574",
   coldDrink: "https://images.unsplash.com/photo-1541167760496-1628856ab772",
   juice: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1",
   bakery: "https://images.unsplash.com/photo-1571091718767-18b5b1457add",

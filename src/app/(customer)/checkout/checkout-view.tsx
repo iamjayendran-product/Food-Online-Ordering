@@ -32,7 +32,7 @@ function toDateInputValue(date: Date): string {
 export function CheckoutView() {
   const router = useRouter();
   const { basket, hydrated, remove, clear, refreshBasket } = useBasket();
-  const [paymentMethod, setPaymentMethod] = useState<"CASH" | "ONLINE">("ONLINE");
+  const [paymentMethod, setPaymentMethod] = useState<"CASH" | "ONLINE">("CASH");
   const [scheduleMode, setScheduleMode] = useState<"asap" | "schedule">("asap");
   const [scheduleDate, setScheduleDate] = useState("");
   const [scheduleTime, setScheduleTime] = useState("");
@@ -266,6 +266,7 @@ export function CheckoutView() {
                   key={line.itemId}
                   sx={{
                     display: "flex",
+                    flexWrap: "wrap",
                     alignItems: "center",
                     justifyContent: "space-between",
                     gap: 2,

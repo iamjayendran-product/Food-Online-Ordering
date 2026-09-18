@@ -18,9 +18,14 @@ test("TC-J.1 guest journey: search, menu, basket, checkout, login, pay", async (
   await expect(page).toHaveURL("/login?next=%2Fcheckout");
   await page.getByLabel("Email").fill("priya@example.com");
   await page.getByLabel("Password").fill("password123");
-  await page.getByRole("button", { name: "Log in" }).click();
+  // Scoped to the form: the F24 guest-login mode toggle also has a
+  // same-named "Log in" control (switching modes, not submitting).
+  await page.locator("form").getByRole("button", { name: "Log in" }).click();
 
   await expect(page).toHaveURL("/checkout");
+  // Cash is now the default (F27) — switch to online to keep this journey
+  // exercising the online-pay path end to end.
+  await page.getByRole("button", { name: "Pay later online" }).click();
   const payButton = page.getByRole("button", { name: "Pay ₹294" });
   await expect(payButton).toBeVisible();
   await payButton.click();

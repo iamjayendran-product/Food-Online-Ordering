@@ -9,14 +9,14 @@ async function addChickenBiryaniToBasket(page: import("@playwright/test").Page) 
     .click();
 }
 
-test("TC-10.1 checkout offers cash and online payment, with online selected by default", async ({ page }) => {
+test("TC-10.1 checkout offers cash and online payment, with cash selected by default", async ({ page }) => {
   await addChickenBiryaniToBasket(page);
   await loginAs(page, "priya@example.com");
   await page.goto("/checkout");
 
-  await expect(page.getByRole("button", { name: "Pay in cash" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Pay later online", pressed: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Pay ₹273" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Pay in cash", pressed: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Pay later online" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Place order" })).toBeVisible();
 });
 
 test("TC-10.2 paying in cash places the order with no charge and shows a cash pickup message", async ({ page }) => {
@@ -48,7 +48,7 @@ test("TC-10.5 the confirmation page shows a simulated kitchen view with a LIVE b
   await addChickenBiryaniToBasket(page);
   await loginAs(page, "priya@example.com");
   await page.goto("/checkout");
-  await page.getByRole("button", { name: "Pay ₹273" }).click();
+  await page.getByRole("button", { name: "Place order" }).click();
   await expect(page).toHaveURL(/\/orders\/.+/);
 
   await expect(page.getByRole("heading", { name: "Kitchen view" })).toBeVisible();
@@ -56,4 +56,15 @@ test("TC-10.5 the confirmation page shows a simulated kitchen view with a LIVE b
   await expect(
     page.getByText("Simulated live view — Dindigul Thalappakatti’s kitchen"),
   ).toBeVisible();
+});
+
+test("TC-10.6 the kitchen view shows a real chef photo, not just an illustration", async ({ page }) => {
+  await addChickenBiryaniToBasket(page);
+  await loginAs(page, "priya@example.com");
+  await page.goto("/checkout");
+  await page.getByRole("button", { name: "Place order" }).click();
+  await expect(page).toHaveURL(/\/orders\/.+/);
+
+  const kitchenPhoto = page.locator('img[src="/images/kitchen-chef.jpg"]');
+  await expect(kitchenPhoto).toBeVisible();
 });

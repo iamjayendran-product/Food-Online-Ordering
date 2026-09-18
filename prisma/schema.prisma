@@ -12,9 +12,13 @@ datasource db {
 
 model User {
   id           String   @id @default(cuid())
-  email        String   @unique
-  passwordHash String
+  // Null for a guest: they never register, so there is no email or password
+  // to store. `isGuest` is the authoritative flag — don't infer guest status
+  // from nullability elsewhere.
+  email        String?  @unique
+  passwordHash String?
   name         String
+  isGuest      Boolean  @default(false)
   createdAt    DateTime @default(now())
 
   orders    Order[]

@@ -10,6 +10,7 @@ import { requireUser } from "@/lib/dal";
 import { getPlacedOrderForUser } from "@/lib/orders/get-order";
 import { formatInr } from "@/lib/format";
 import { KitchenCam } from "@/components/kitchen-cam";
+import { ConfettiBurst } from "@/components/confetti-burst";
 
 export default async function OrderConfirmationPage({
   params,
@@ -45,7 +46,8 @@ export default async function OrderConfirmationPage({
 
   return (
     <Box sx={{ maxWidth: 640, mx: "auto" }}>
-      <Box sx={{ textAlign: "center", py: 2 }}>
+      <Box sx={{ textAlign: "center", py: 2, position: "relative" }}>
+        <ConfettiBurst />
         <CheckCircleIcon sx={{ fontSize: 56, color: "success.main" }} />
         <Typography variant="h1" sx={{ mt: 1 }}>
           Order confirmed

@@ -12,7 +12,7 @@ test("TC-1.2 correct email, wrong password shows a generic error", async ({ page
   await page.goto("/login");
   await page.getByLabel("Email").fill("priya@example.com");
   await page.getByLabel("Password").fill("wrongpassword");
-  await page.getByRole("button", { name: "Log in" }).click();
+  await page.locator("form").getByRole("button", { name: "Log in" }).click();
 
   await expect(page.getByText("Invalid email or password.")).toBeVisible();
   const cookies = await context.cookies();
@@ -23,7 +23,7 @@ test("TC-1.3 unknown email shows the same generic error", async ({ page }) => {
   await page.goto("/login");
   await page.getByLabel("Email").fill("nobody@example.com");
   await page.getByLabel("Password").fill("password123");
-  await page.getByRole("button", { name: "Log in" }).click();
+  await page.locator("form").getByRole("button", { name: "Log in" }).click();
 
   await expect(page.getByText("Invalid email or password.")).toBeVisible();
 });
@@ -32,7 +32,7 @@ test("TC-1.5 email with surrounding whitespace and mixed case still logs in", as
   await page.goto("/login");
   await page.getByLabel("Email").fill("  Priya@Example.COM ");
   await page.getByLabel("Password").fill("password123");
-  await page.getByRole("button", { name: "Log in" }).click();
+  await page.locator("form").getByRole("button", { name: "Log in" }).click();
 
   await expect(page).toHaveURL("/");
   await expect(page.getByText("Hi Priya")).toBeVisible();
@@ -68,7 +68,7 @@ test("TC-1.9 an unsafe next parameter is ignored after login", async ({ page }) 
   await page.goto("/login?next=%2F%2Fevil.com");
   await page.getByLabel("Email").fill("priya@example.com");
   await page.getByLabel("Password").fill("password123");
-  await page.getByRole("button", { name: "Log in" }).click();
+  await page.locator("form").getByRole("button", { name: "Log in" }).click();
 
   await expect(page).toHaveURL("/");
 });

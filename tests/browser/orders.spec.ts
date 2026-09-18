@@ -17,7 +17,7 @@ test("TC-6.4 an item that becomes unavailable after being added is flagged and b
 
   await testDb.menuItem.update({ where: { id: item.id }, data: { isAvailable: false } });
   try {
-    const payButton = page.getByRole("button", { name: "Pay ₹273" });
+    const payButton = page.getByRole("button", { name: "Place order" });
     await payButton.click();
 
     await expect(page.getByText("No longer available", { exact: true })).toBeVisible();
@@ -47,11 +47,11 @@ test("TC-6.6 a tampered basket price is corrected with a notice before payment",
   }, BASKET_STORAGE_KEY);
 
   await page.goto("/checkout");
-  await page.getByRole("button", { name: /^Pay ₹/ }).click();
+  await page.getByRole("button", { name: "Place order" }).click();
 
   await expect(page.getByText(/Prices changed since you added these items/)).toBeVisible();
   await expect(page.getByText("Total: ₹273")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Pay ₹273" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Place order" })).toBeVisible();
 });
 
 test("TC-6.8 clearing cookies mid-checkout sends Pay to login with no new order", async ({ page, context }) => {
@@ -61,7 +61,7 @@ test("TC-6.8 clearing cookies mid-checkout sends Pay to login with no new order"
 
   const beforeCount = await testDb.order.count();
   await context.clearCookies();
-  await page.getByRole("button", { name: "Pay ₹273" }).click();
+  await page.getByRole("button", { name: "Place order" }).click();
 
   await expect(page).toHaveURL("/login?next=%2Fcheckout");
   expect(await testDb.order.count()).toBe(beforeCount);
@@ -71,6 +71,9 @@ test("TC-6.12 the confirmation page shows order details and the header basket co
   await addChickenBiryaniToBasket(page);
   await loginAs(page, "priya@example.com");
   await page.goto("/checkout");
+  // Explicitly online: this test asserts the "Paid online" confirmation
+  // wording, and cash (F27's new default) would show different text.
+  await page.getByRole("button", { name: "Pay later online" }).click();
   await page.getByRole("button", { name: "Pay ₹273" }).click();
   await expect(page).toHaveURL(/\/orders\/.+/);
 
@@ -83,11 +86,25 @@ test("TC-6.12 the confirmation page shows order details and the header basket co
   await expect(page.getByRole("link", { name: "Basket", exact: true })).toBeVisible();
 });
 
+test("TC-6.17 the confirmation page plays a confetti animation around the checkmark", async ({ page }) => {
+  await addChickenBiryaniToBasket(page);
+  await loginAs(page, "priya@example.com");
+  await page.goto("/checkout");
+  await page.getByRole("button", { name: "Place order" }).click();
+  await expect(page).toHaveURL(/\/orders\/.+/);
+
+  const confetti = page.getByTestId("confetti-burst");
+  await expect(confetti).toBeVisible();
+  // Randomized client-side after mount (see confetti-burst.tsx) — assert it
+  // actually rendered pieces, not just an empty container.
+  expect(await confetti.locator("> div").count()).toBeGreaterThan(0);
+});
+
 test("TC-6.13 reloading the confirmation page shows the same order", async ({ page }) => {
   await addChickenBiryaniToBasket(page);
   await loginAs(page, "priya@example.com");
   await page.goto("/checkout");
-  await page.getByRole("button", { name: "Pay ₹273" }).click();
+  await page.getByRole("button", { name: "Place order" }).click();
   await expect(page).toHaveURL(/\/orders\/.+/);
   const url = page.url();
 
@@ -100,7 +117,7 @@ test("TC-6.14 another customer cannot view someone else's confirmation", async (
   await addChickenBiryaniToBasket(page);
   await loginAs(page, "priya@example.com");
   await page.goto("/checkout");
-  await page.getByRole("button", { name: "Pay ₹273" }).click();
+  await page.getByRole("button", { name: "Place order" }).click();
   await expect(page).toHaveURL(/\/orders\/.+/);
   const orderUrl = page.url();
 
@@ -114,7 +131,7 @@ test("TC-6.15 a logged-out visitor is asked to log in and returned to the confir
   await addChickenBiryaniToBasket(page);
   await loginAs(page, "priya@example.com");
   await page.goto("/checkout");
-  await page.getByRole("button", { name: "Pay ₹273" }).click();
+  await page.getByRole("button", { name: "Place order" }).click();
   await expect(page).toHaveURL(/\/orders\/.+/);
   const orderUrl = page.url();
 
@@ -124,7 +141,7 @@ test("TC-6.15 a logged-out visitor is asked to log in and returned to the confir
 
   await page.getByLabel("Email").fill("priya@example.com");
   await page.getByLabel("Password").fill("password123");
-  await page.getByRole("button", { name: "Log in" }).click();
+  await page.locator("form").getByRole("button", { name: "Log in" }).click();
 
   await expect(page).toHaveURL(orderUrl);
   await expect(page.getByRole("heading", { name: "Order confirmed" })).toBeVisible();

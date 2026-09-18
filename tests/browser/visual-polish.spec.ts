@@ -22,7 +22,14 @@ test("TC-14.2 the selected pickup-time and payment-method toggle buttons fill so
   await expect(asap).toHaveCSS("background-color", "rgb(196, 58, 47)");
   await expect(asap).toHaveCSS("color", "rgb(255, 255, 255)");
 
+  // Cash is the default selection (F27); switch to online to prove the
+  // solid-tomato fill follows selection generally, not just the default.
   const online = page.getByRole("button", { name: "Pay later online" });
+  await online.click();
+  // Move the cursor off the button first: MuiToggleButton's own
+  // `&.Mui-selected:hover` rule intentionally darkens further, and the
+  // click above leaves the mouse resting right on top of it.
+  await page.mouse.move(0, 0);
   await expect(online).toHaveCSS("background-color", "rgb(196, 58, 47)");
 });
 

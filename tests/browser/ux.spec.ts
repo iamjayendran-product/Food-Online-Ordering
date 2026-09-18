@@ -104,6 +104,24 @@ test("TC-7.7 every menu item shows a photo", async ({ page }) => {
   expect(await images.count()).toBe(rowCount);
 });
 
+test("TC-7.10 a menu item photo that fails to load is removed, not shown broken", async ({ page }) => {
+  // Ratna Cafe's "Tea" is the item the F26 bug fix was spotted on — its seed
+  // photo now resolves correctly, so this aborts the request before the page
+  // ever loads it, simulating a future failure rather than relying on a URL
+  // that's expected to be broken. Routed before navigating so there's no
+  // chance of the browser serving an already-cached copy on a reload.
+  await page.route("**/photo-1544787219-7f47ccb76574*", (route) => route.abort());
+  await page.goto("/restaurants/ratna-cafe");
+
+  // Not `{ hasText: "Tea" }` on its own: "Sambar Idli"'s description
+  // ("Steamed rice...") contains "tea" as a substring ("S-tea-med") and
+  // sorts earlier in the DOM, so a loose substring match silently grabs the
+  // wrong row.
+  const row = page.locator("#menu-categories li").filter({ has: page.getByText("Tea", { exact: true }) });
+  await expect(row.locator("img")).toHaveCount(0);
+  await expect(row.getByText("Milk tea.")).toBeVisible();
+});
+
 test("TC-7.9 the application is branded Foodlicious", async ({ page }) => {
   await page.goto("/");
 

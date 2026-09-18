@@ -25,7 +25,7 @@ test("TC-9.1 scheduling a valid future pickup time places the order for that tim
   await page.getByRole("button", { name: "Schedule for later" }).click();
   await page.getByLabel("Pickup date").fill(tomorrowDateInputValue());
   await page.getByLabel("Pickup time").fill("14:00");
-  await page.getByRole("button", { name: /^Pay ₹/ }).click();
+  await page.getByRole("button", { name: "Place order" }).click();
 
   await expect(page).toHaveURL(/\/orders\/.+/);
   await expect(page.getByRole("heading", { name: "Order confirmed" })).toBeVisible();
@@ -37,7 +37,7 @@ test("TC-9.4 checking out without scheduling still shows Pickup: ASAP", async ({
   await addChickenBiryaniToBasket(page);
   await loginAs(page, "priya@example.com");
   await page.goto("/checkout");
-  await page.getByRole("button", { name: /^Pay ₹/ }).click();
+  await page.getByRole("button", { name: "Place order" }).click();
 
   await expect(page).toHaveURL(/\/orders\/.+/);
   await expect(page.getByText("Pickup: ASAP")).toBeVisible();

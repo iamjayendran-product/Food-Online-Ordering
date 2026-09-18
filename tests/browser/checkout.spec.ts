@@ -18,7 +18,7 @@ test("TC-5.1 a guest is sent to log in and returns to checkout with the basket i
   await expect(page).toHaveURL("/login?next=%2Fcheckout");
   await page.getByLabel("Email").fill("priya@example.com");
   await page.getByLabel("Password").fill("password123");
-  await page.getByRole("button", { name: "Log in" }).click();
+  await page.locator("form").getByRole("button", { name: "Log in" }).click();
 
   await expect(page).toHaveURL("/checkout");
   await expect(page.getByText("Seeraga Samba Chicken Biryani")).toBeVisible();
@@ -44,13 +44,13 @@ test("TC-5.3 opening checkout with an empty basket redirects to the basket page"
   await expect(page).toHaveURL("/basket");
 });
 
-test("TC-5.4 the payment panel defaults to online payment and the Pay button shows the total", async ({ page }) => {
+test("TC-5.4 the payment panel defaults to cash payment and the Pay button reads Place order", async ({ page }) => {
   await addChickenBiryaniToBasket(page);
   await loginAs(page, "priya@example.com");
   await page.goto("/checkout");
 
-  await expect(page.getByRole("button", { name: "Pay later online", pressed: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Pay ₹273" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Pay in cash", pressed: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Place order" })).toBeVisible();
 });
 
 test("TC-5.5 double-clicking Pay disables the button and places exactly one order", async ({ page }) => {
@@ -58,7 +58,7 @@ test("TC-5.5 double-clicking Pay disables the button and places exactly one orde
   await loginAs(page, "priya@example.com");
   await page.goto("/checkout");
 
-  const payButton = page.getByRole("button", { name: "Pay ₹273" });
+  const payButton = page.getByRole("button", { name: "Place order" });
   const beforeCount = await testDb.order.count();
 
   // Two native clicks dispatched synchronously in the page, back-to-back,

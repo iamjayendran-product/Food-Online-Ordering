@@ -6,7 +6,9 @@ export async function loginAs(page: Page, email: string, password = "password123
   await page.goto("/login");
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill(password);
-  await page.getByRole("button", { name: "Log in" }).click();
+  // Scoped to the form: the F24 guest-login mode toggle also has a
+  // same-named "Log in" control (switching modes, not submitting).
+  await page.locator("form").getByRole("button", { name: "Log in" }).click();
   // Wait for the post-login redirect so the session cookie is guaranteed to
   // be stored before this helper returns — otherwise a caller's very next
   // action (e.g. page.reload()) can race the browser applying Set-Cookie.
