@@ -10,13 +10,7 @@ test("TC-3.1 selecting a restaurant shows its name, cuisines, address and catego
   await expect(page.getByText("Habibullah Road, T Nagar, Chennai")).toBeVisible();
 
   const categoryHeadings = page.getByRole("heading", { level: 2 });
-  await expect(categoryHeadings).toHaveText([
-    "From the kitchen",
-    "Biryani",
-    "Starters",
-    "Curries",
-    "Beverages",
-  ]);
+  await expect(categoryHeadings).toHaveText(["Biryani", "Starters", "Curries", "Beverages"]);
 });
 
 test("TC-3.2 a menu item shows name, description, price and an accessible veg/non-veg marker", async ({ page }) => {

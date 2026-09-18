@@ -39,11 +39,3 @@ test("TC-15.2 the store name, rating and address render over the hero photo", as
   ).toBeVisible();
   await expect(page.getByText("Habibullah Road, T Nagar, Chennai")).toBeVisible();
 });
-
-test("TC-15.3 a row of illustrated reel cards appears below the store info", async ({ page }) => {
-  await page.goto("/restaurants/dindigul-thalappakatti");
-
-  await expect(page.getByRole("heading", { name: "From the kitchen" })).toBeVisible();
-  const reels = page.locator('[aria-label^="Illustration:"]');
-  await expect(reels).toHaveCount(3);
-});

@@ -4,7 +4,6 @@ import Chip from "@mui/material/Chip";
 import Typography from "@mui/material/Typography";
 import { getRestaurantMenu } from "@/lib/restaurants";
 import { MenuItemRow } from "@/components/menu-item-row";
-import { MenuReels } from "@/components/menu-reels";
 import { FloatingBasketButton } from "@/components/floating-basket-button";
 import { RestaurantHeroBanner } from "@/components/restaurant-hero-banner";
 import { brand } from "@/theme";
@@ -37,8 +36,6 @@ export default async function RestaurantPage({
         ratingAvg={menu.ratingAvg}
         reviewCount={menu.reviewCount}
       />
-
-      <MenuReels cuisines={menu.cuisines} />
 
       {menu.categories.length > 1 && (
         <Box

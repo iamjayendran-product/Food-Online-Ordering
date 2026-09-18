@@ -244,13 +244,13 @@ Removes a data gap in photo coverage and makes the brand color and interactive s
 *Technical considerations:* `theme.ts`'s `palette.action.hover/selected/focus` are overridden from MUI's defaults to tomato-tinted rgba values, so every component using the default hover/selected mechanism (buttons, list items, menu items) picks it up without individual overrides. `MuiToggleButton`'s `&.Mui-selected` gets an explicit solid-tomato override since the intensity needed there (a primary either/or choice) is stronger than a generic hover tint.
 
 #### P0-15: Menu page enhancements (F21)
-Three additions to the restaurant menu page: reachability, visual hierarchy, and a decorative content row.
+Two additions to the restaurant menu page: reachability and visual hierarchy.
 
 - **Given** a non-empty basket, **when** the customer is on a restaurant's menu page, **then** a floating basket button stays visible while scrolling, showing the item count and linking to `/basket`. [TC-15.1]
 - The store's name, rating, address and info chips are **superimposed directly on the hero banner photos** with a dark-to-transparent gradient scrim for legibility, replacing the previous stacked banner-then-card layout. [TC-15.2]
-- Directly below the store info, a horizontally-scrollable row of short **illustrated "reel" cards** (looping CSS/SVG animations — a wok toss, a tandoor flame, a steamer, plating/garnish, a dessert drizzle) suggests item-prep/social content per cuisine. Clearly decorative, not real video and not claimed to be the restaurant's actual social media. [TC-15.3]
+- ~~Directly below the store info, a horizontally-scrollable row of short illustrated "reel" cards (looping CSS/SVG animations — a wok toss, a tandoor flame, a steamer, plating/garnish, a dessert drizzle) suggests item-prep/social content per cuisine.~~ **Removed by F23 (2026-09-18)** at the owner's request, same day it shipped. `menu-reels.tsx` and TC-15.3 were deleted.
 
-*Technical considerations:* the reel-card variant per restaurant is assigned by cuisine keyword, the same pattern `PHOTO_KEYWORDS` already uses for menu item photos — a small shared pool of illustrations, not unique content per restaurant. No new external assets or dependencies for any of the three.
+*Technical considerations:* no new external assets or dependencies for either remaining item.
 
 ### Nice-to-Have (P1)
 **None committed for v1.** The scope is deliberately tight. Anything proposed for v1 enters here only with a matching removal from P0 or an explicit timeline extension.
@@ -509,7 +509,6 @@ All test cases are automated with Playwright. **B** = browser test; **L** = logi
 |---|---|---|---|
 | TC-15.1 | B | Add an item, scroll down the menu page | A floating basket button stays visible showing the item count, linking to `/basket` |
 | TC-15.2 | B | Open a restaurant's menu page | Store name/rating/address render over the hero photo with a gradient scrim |
-| TC-15.3 | B | Open a restaurant's menu page | A row of illustrated reel cards appears below the store info |
 
 ### TC-J: End-to-end journey (Goal 1)
 | ID | Type | Scenario | Expected |
