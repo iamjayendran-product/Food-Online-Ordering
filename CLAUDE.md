@@ -10,7 +10,7 @@ Key scope decisions:
 - **Fulfillment: pickup only.** No delivery logistics, no courier/delivery-partner role, no live tracking.
 - **Payments: mocked/simulated.** No real payment gateway is integrated. Checkout should be structured so a real gateway (e.g. Razorpay) could be swapped in later without a redesign.
 - **Auth: email + password.** No social login, no phone OTP.
-- **Deployment: local only for now.** No cloud hosting/CI setup yet.
+- **Deployment: hosted.** GitHub is the source of truth; Vercel deploys from it against a Neon Postgres database. No CI pipeline (lint/test gating) yet — see Deployment section below.
 
 ## Roles
 
@@ -88,6 +88,16 @@ npm run dev         # start Next.js dev server
 - Keep `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` in `.env` in sync with the credentials embedded in `DATABASE_URL`.
 - `npm run db:migrate` / `npm run db:seed` — apply migrations / run the idempotent seed (`prisma/seed.ts`). Prisma 7's `migrate reset` does **not** auto-seed even with `migrations.seed` configured — always run seed as its own step.
 - Demo accounts: `priya@example.com` / `arjun@example.com`, password `password123`.
+
+## Deployment
+
+- **GitHub:** [iamjayendran-product/Food-Online-Ordering](https://github.com/iamjayendran-product/Food-Online-Ordering) (private). `main` is connected to Vercel — every push to `main` triggers a production deploy; other branches/PRs get preview deploys.
+- **Vercel:** project `food-online-ordering` under the `iamjayendran-products-projects` scope. Production URL: https://food-online-ordering.vercel.app.
+- **Database:** Neon Postgres (`food-online-ordering-db`), provisioned via the Vercel Neon marketplace integration, connected to Production and Preview environments. Vercel sets `DATABASE_URL` (pooled, via PgBouncer) for app runtime and `DATABASE_URL_UNPOOLED` (direct) for anything needing a session connection.
+  - **Migrations must use the direct connection, not the pooled one** — `prisma migrate deploy` over the pooled URL can fail with prepared-statement or session-state errors. Run migrations locally against prod with `DATABASE_URL="$DATABASE_URL_UNPOOLED" npx prisma migrate deploy` after pulling env vars (`vercel env pull --environment=production`).
+  - `prisma7.config.ts` and `src/lib/db.ts` both read a single `DATABASE_URL` — that's intentionally the pooled one for normal app/build usage; only override it for direct-connection tasks (migrations, seeding).
+- **Env vars** (set via `vercel env add`, Production + Preview): `DATABASE_URL` / `DATABASE_URL_UNPOOLED` (from the Neon integration), `SESSION_SECRET` (generated with `openssl rand -base64 32`, distinct from the local dev value). No `TEST_DATABASE_URL` in Vercel — the Playwright suite only runs locally.
+- Redeploy manually with `npx vercel --prod` from the repo root, or just push to `main`.
 
 ## Testing
 
