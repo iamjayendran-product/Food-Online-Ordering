@@ -218,6 +218,7 @@ Replaces the discovery page's static banner and campaigns marquee with a promoti
 Small refinements to the F14 discovery redesign, on top of the same carousel/chip/card mechanisms — no new pages or data model.
 
 - The promo slide's headline never wraps to a second line, and the carousel background carries a few small animated decorative shapes. [TC-12.1]
+- Both promo-slide text lines are **center-aligned**; the "Welcome to Foodlicious" eyebrow text uses a larger font than the platform default. **Added by F31 (2026-09-18).**
 - **Given** an active category chip, **then** it shows a check mark, and a subtle **"Clear all"** link appears next to the chip row (only while a filter is active) that clears it. [TC-12.2, TC-12.3]
 - Every store card shows a **"Pre-order available"** chip alongside its pickup-time chip — scheduling is already platform-wide (P0-9), so this is informational on every card, not a per-restaurant flag. [TC-12.4]
 - **Sin & Tonic**'s card carries a **"Foodlicious exclusive"** badge, positioned opposite the favourite button. [TC-12.5]

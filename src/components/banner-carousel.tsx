@@ -78,6 +78,8 @@ export function BannerCarousel({ campaigns }: { campaigns: CampaignItem[] }) {
             display: "flex",
             flexDirection: "column",
             justifyContent: "center",
+            alignItems: "center",
+            textAlign: "center",
             px: { xs: 3, sm: 6 },
             color: "#FFFFFF",
             // Literal gradient, not an sx callback: a theme callback is a
@@ -118,14 +120,19 @@ export function BannerCarousel({ campaigns }: { campaigns: CampaignItem[] }) {
           ))}
           <Typography
             variant="body2"
-            sx={{ fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", opacity: 0.9 }}
+            sx={{
+              fontWeight: 700,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              opacity: 0.9,
+              fontSize: { xs: "0.9375rem", sm: "1.125rem" },
+            }}
           >
             Welcome to Foodlicious
           </Typography>
           <Typography
             component="p"
             sx={{
-              display: "inline-block",
               mt: 0.5,
               whiteSpace: "nowrap",
               fontFamily: "var(--font-space-grotesk), var(--font-geist-sans), system-ui, sans-serif",
